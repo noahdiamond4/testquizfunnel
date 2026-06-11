@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What's In Your Shower Water? | Free Water Report — Sift</title>
+  <meta name="description" content="Enter your ZIP code to get a free, personalized water quality report — and find out what your shower water is doing to your hair and skin." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="logo" href="index.html">Sift<span>.</span></a>
+  </header>
+
+  <main class="quiz-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+    <!-- STEP 0: ZIP entry -->
+    <section class="step active" data-step="0">
+      <span class="step-kicker">Free 30-Second Water Check</span>
+      <h1>What's really in your shower water?</h1>
+      <p class="sub">Your hair and skin spend more time in tap water than any product you buy. Enter your ZIP code to get a free water quality report for your area.</p>
+
+      <div class="zip-row">
+        <input id="zip" class="zip-input" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="ZIP code" aria-label="ZIP code" />
+      </div>
+      <p class="zip-error" id="zip-error"></p>
+      <button class="btn btn-aqua" id="zip-go">Get My Free Water Report →</button>
+
+      <div class="trust-row">
+        <span>🔒 No email required</span>
+        <span>⚡ Instant results</span>
+        <span>📊 Regional USGS &amp; EPA data</span>
+      </div>
+    </section>
+
+    <!-- STEP 1: main concern -->
+    <section class="step" data-step="1">
+      <span class="step-kicker" id="s1-kicker">Pulling water data…</span>
+      <h2>While your report generates — what bothers you most?</h2>
+      <p class="sub">We'll tailor your report to what matters to you.</p>
+      <div class="options" data-q="concern" data-multi="false">
+        <button class="option" data-val="hair"><span class="emoji">💇</span> Dry, dull, or frizzy hair</button>
+        <button class="option" data-val="skin"><span class="emoji">🧴</span> Dry, itchy, or irritated skin</button>
+        <button class="option" data-val="scalp"><span class="emoji">😣</span> Flaky or itchy scalp</button>
+        <button class="option" data-val="curious"><span class="emoji">🔍</span> Just curious about my water</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: symptoms (multi) -->
+    <section class="step" data-step="2">
+      <span class="step-kicker">Question 2 of 5</span>
+      <h2>Have you noticed any of these at home?</h2>
+      <p class="sub">Select all that apply — these are physical clues about your water.</p>
+      <div class="options" data-q="symptoms" data-multi="true">
+        <button class="option" data-val="buildup"><span class="emoji">🚿</span> White crust or spots on faucets / glass <span class="check">✓</span></button>
+        <button class="option" data-val="smell"><span class="emoji">👃</span> A "pool" or chemical smell in the shower <span class="check">✓</span></button>
+        <button class="option" data-val="tight-skin"><span class="emoji">✋</span> Skin feels tight or squeaky after showering <span class="check">✓</span></button>
+        <button class="option" data-val="flat-hair"><span class="emoji">💆</span> Hair feels coated, heavy, or hard to lather <span class="check">✓</span></button>
+        <button class="option" data-val="none"><span class="emoji">🤷</span> None of these <span class="check">✓</span></button>
+      </div>
+      <button class="btn btn-aqua" id="symptoms-next" disabled>Continue →</button>
+    </section>
+
+    <!-- STEP 3: hair type -->
+    <section class="step" data-step="3">
+      <span class="step-kicker">Question 3 of 5</span>
+      <h2>Is your hair color-treated, or do you spend on hair care?</h2>
+      <p class="sub">Hard water and chlorine are hardest on treated hair.</p>
+      <div class="options" data-q="hair" data-multi="false">
+        <button class="option" data-val="color"><span class="emoji">🎨</span> Yes — my hair is color-treated</button>
+        <button class="option" data-val="products"><span class="emoji">🛍️</span> No color, but I invest in good products</button>
+        <button class="option" data-val="basic"><span class="emoji">🧼</span> I keep it simple</button>
+      </div>
+      <div class="fact-chip" id="fact-1">💡 <strong>Did you know?</strong> A single 10-minute shower runs roughly 20 gallons of unfiltered tap water over your skin and hair — far more water than you drink in a week.</div>
+    </section>
+
+    <!-- STEP 4: home age -->
+    <section class="step" data-step="4">
+      <span class="step-kicker">Question 4 of 5</span>
+      <h2>How old is your home or building?</h2>
+      <p class="sub">Older plumbing can add sediment and metals after water leaves the treatment plant.</p>
+      <div class="options" data-q="homeAge" data-multi="false">
+        <button class="option" data-val="new"><span class="emoji">🏗️</span> Built in the last 15 years</button>
+        <button class="option" data-val="mid"><span class="emoji">🏠</span> 15–40 years old</button>
+        <button class="option" data-val="old"><span class="emoji">🏚️</span> 40+ years old</button>
+        <button class="option" data-val="unknown"><span class="emoji">🤔</span> Not sure</button>
+      </div>
+    </section>
+
+    <!-- STEP 5: household -->
+    <section class="step" data-step="5">
+      <span class="step-kicker">Last Question</span>
+      <h2>How many people shower in your home?</h2>
+      <p class="sub">We'll estimate your household's total water exposure.</p>
+      <div class="options" data-q="household" data-multi="false">
+        <button class="option" data-val="1"><span class="emoji">🧍</span> Just me</button>
+        <button class="option" data-val="2"><span class="emoji">🧑‍🤝‍🧑</span> Two of us</button>
+        <button class="option" data-val="3"><span class="emoji">👨‍👩‍👧</span> Three or four</button>
+        <button class="option" data-val="5"><span class="emoji">👨‍👩‍👧‍👦</span> Five or more</button>
+      </div>
+    </section>
+
+    <!-- STEP 6: analyzing -->
+    <section class="step" data-step="6">
+      <div class="analyze-wrap">
+        <div class="droplet"></div>
+        <h2 id="analyze-title">Building your water report…</h2>
+        <p class="sub" id="analyze-sub">Cross-referencing regional data for ZIP <span id="analyze-zip"></span></p>
+        <div class="analyze-steps">
+          <div class="analyze-step" data-a="0"><span class="dot">✓</span> Locating your water region</div>
+          <div class="analyze-step" data-a="1"><span class="dot">✓</span> Checking USGS hardness data for your area</div>
+          <div class="analyze-step" data-a="2"><span class="dot">✓</span> Estimating chlorine &amp; disinfectant levels</div>
+          <div class="analyze-step" data-a="3"><span class="dot">✓</span> Matching your answers to water symptoms</div>
+          <div class="analyze-step" data-a="4"><span class="dot">✓</span> Generating your personalized report</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/water-data.js"></script>
+  <script src="js/quiz.js"></script>
+</body>
+</html>

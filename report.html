@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Personalized Water Quality Report — Sift</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="logo" href="index.html">Sift<span>.</span></a>
+  </header>
+
+  <!-- HERO -->
+  <section class="report-hero">
+    <span class="kicker" id="hero-kicker">Personalized Water Report</span>
+    <h1 id="hero-headline">Your Water Quality Report</h1>
+    <p class="sub" id="hero-sub"></p>
+  </section>
+
+  <main class="report-body">
+
+    <!-- SCORE -->
+    <div class="card score-card fade-in">
+      <p class="section-label">Shower Water Score — ZIP <span id="score-zip"></span></p>
+      <div class="gauge">
+        <svg viewBox="0 0 210 120">
+          <path class="track" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
+          <path class="value" id="gauge-arc" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
+        </svg>
+        <div class="gauge-num" id="gauge-num">0</div>
+      </div>
+      <div><span class="gauge-grade" id="gauge-grade"></span></div>
+      <p class="score-note" id="score-note"></p>
+    </div>
+
+    <!-- METRICS -->
+    <div class="card fade-in">
+      <p class="section-label">What We Found</p>
+      <h2 id="findings-title">Key findings for your area</h2>
+
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name">Water Hardness</span>
+          <span class="metric-val" id="hardness-val"></span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="hardness-bar"></div></div>
+        <p class="metric-note" id="hardness-note"></p>
+      </div>
+
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name">Chlorine / Disinfectant Exposure</span>
+          <span class="metric-val" id="chlorine-val"></span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="chlorine-bar"></div></div>
+        <p class="metric-note" id="chlorine-note"></p>
+      </div>
+
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name">Likely Present In Your Shower Water</span>
+        </div>
+        <ul class="flag-list" id="flags"></ul>
+      </div>
+    </div>
+
+    <!-- PERSONALIZED ANALYSIS -->
+    <div class="card fade-in">
+      <p class="section-label">Your Answers, Explained</p>
+      <h2 id="personal-title"></h2>
+      <div id="personal-body"></div>
+    </div>
+
+    <!-- THE NARRATIVE / ADVERTORIAL -->
+    <div class="card fade-in">
+      <p class="section-label">Why Products Haven't Fixed It</p>
+      <h2>You can't out-condition your water.</h2>
+      <p id="narrative-1"></p>
+      <p id="narrative-2"></p>
+      <p><strong>The fix isn't another product — it's filtering the water itself,</strong> at the one place your body meets it most: the shower head.</p>
+    </div>
+
+    <!-- PRODUCT OFFER -->
+    <div class="card fade-in" id="offer">
+      <p class="section-label">The Recommendation For Your Water</p>
+      <div class="product-visual">
+        <div class="shower-icon">🚿</div>
+        <h3>The Sift Filtered Shower Head</h3>
+        <p class="tagline" id="product-tagline"></p>
+      </div>
+
+      <ul class="benefit-list" id="benefits"></ul>
+
+      <div class="price-row">
+        <span class="price-now" id="price-now"></span>
+        <span class="price-was" id="price-was"></span>
+        <span class="price-badge" id="price-badge"></span>
+      </div>
+      <p class="offer-note">Free shipping · Tool-free install in under 2 minutes · Fits standard US shower arms</p>
+
+      <a class="btn btn-primary" id="cta-main" href="#">Get My Sift Shower Head →</a>
+
+      <div class="guarantee">
+        <span class="shield">🛡️</span>
+        <div><strong id="guarantee-title"></strong><br />
+        Shower with Sift. If your hair and skin don't feel the difference, send it back for a full refund — we'll even cover return shipping.</div>
+      </div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="card fade-in">
+      <p class="section-label">From People With Water Like Yours</p>
+      <h2 id="testimonial-title">What changed for them</h2>
+      <div id="testimonials"></div>
+    </div>
+
+    <!-- COMPARISON -->
+    <div class="card fade-in">
+      <p class="section-label">Compare Your Options</p>
+      <h2>Ways to deal with your water</h2>
+      <table class="compare">
+        <thead>
+          <tr><th></th><th class="sift-col">Sift</th><th>Whole-home softener</th><th>Do nothing</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Upfront cost</td><td class="sift-col" id="compare-price"></td><td>$2,000–$6,000</td><td>$0</td></tr>
+          <tr><td>Filters chlorine at the shower</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+          <tr><td>Reduces hard-water minerals &amp; sediment</td><td class="sift-col yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+          <tr><td>Install time</td><td class="sift-col">2 min</td><td>1–2 days</td><td>—</td></tr>
+          <tr><td>Works in apartments / rentals</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ -->
+    <div class="card fade-in">
+      <p class="section-label">Common Questions</p>
+      <h2>Before you decide</h2>
+      <details class="faq-item">
+        <summary>Will it lower my water pressure?</summary>
+        <p>No — Sift's multi-stage filter is designed for full flow. Most customers report pressure feels the same or better thanks to the engineered spray plate.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How long does the filter last?</summary>
+        <p id="faq-filter-life"></p>
+      </details>
+      <details class="faq-item">
+        <summary>Is it hard to install?</summary>
+        <p>If you can unscrew a bottle cap, you can install Sift. It threads onto any standard US shower arm by hand — no tools, no plumber.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What if it doesn't work for me?</summary>
+        <p id="faq-guarantee"></p>
+      </details>
+      <a class="btn btn-primary" id="cta-faq" href="#" style="margin-top:20px;">Try Sift Risk-Free →</a>
+    </div>
+
+  </main>
+
+  <p class="footnote">
+    Water quality figures on this page are <strong>estimates</strong> generated from regional
+    USGS water hardness data, EPA disinfection norms, and your quiz answers — they are not
+    laboratory test results for your specific tap. For your utility's exact measurements,
+    consult its annual Consumer Confidence Report. Testimonials reflect individual
+    experiences; results vary. Sift shower heads reduce chlorine, sediment, and certain
+    dissolved minerals; they are not water softeners and do not remove all contaminants.
+  </p>
+
+  <!-- STICKY CTA -->
+  <div class="sticky-cta" id="sticky-cta">
+    <div class="sc-text">
+      <div class="sc-title" id="sticky-title">Your water scored low.</div>
+      <div class="sc-sub" id="sticky-sub"></div>
+    </div>
+    <a class="btn btn-primary" id="cta-sticky" href="#">Get Sift</a>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/water-data.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>
