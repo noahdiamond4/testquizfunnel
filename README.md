@@ -18,6 +18,23 @@ built for paid traffic from Facebook/Instagram ads.
    question): `https://{store}/cart/{variantId}:{qty}` + attribution params.
    Falls back to `checkoutUrl` with params if variant IDs aren't set.
 
+## Live funnel dashboard — `dashboard.html`
+
+Real-time view of every session: who's live right now, the step-by-step
+funnel with drop-off percentages, a live activity feed, and a session table
+showing exactly where each abandoner stopped ("Hit the email gate and
+wouldn't trade their email", "Saw the offer and price, then left") plus the
+answers they gave before leaving.
+
+- Every funnel action (each question answered, report viewed, offer seen,
+  email unlock, checkout click) is sent by `js/track.js`; a `pagehide`
+  beacon catches abandons even on tab close.
+- Open `dashboard.html`, paste your Apps Script web-app URL and the
+  `DASHBOARD_KEY` you set in the script. Auto-refreshes every 10s.
+- Preview it with sample data: `dashboard.html?demo=1`.
+- The raw data also lands in your Google Sheet ("Events" tab) for any
+  deeper analysis.
+
 ## Lead capture → Google Sheets
 
 Every report unlock POSTs the lead (name, email, ZIP, score, all answers) to

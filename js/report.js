@@ -29,6 +29,18 @@
   }
   function track(event, data) { if (window.fbq) fbq("track", event, data || {}); }
 
+  // -------- Funnel events --------
+  let unlockedFlag = false, offerSeen = false, checkoutClicked = false;
+  SiftTrack.send("report_view", { zip: p.zip, detail: "score " + p.score });
+  window.addEventListener("pagehide", () => {
+    if (checkoutClicked) return;
+    SiftTrack.send("exit", {
+      zip: p.zip,
+      step: !unlockedFlag ? "email_gate" : (offerSeen ? "report_after_offer" : "report_before_offer"),
+      detail: "score " + p.score + " · " + (a.concern || "") + " · finish " + (a.fixtures || ""),
+    });
+  });
+
   // -------- Derived severity helpers --------
   const hardBad = p.hardnessTier >= 2;
   const hardMid = p.hardnessTier === 1;
@@ -132,10 +144,12 @@
   const gated = $("gated");
 
   function unlock(skipAnimation) {
+    unlockedFlag = true;
     gateZone.classList.add("unlocked");
     animateGauge();
     if (!skipAnimation) {
       track("Lead", { content_name: "report_unlocked" });
+      SiftTrack.send("gate_unlock", { zip: p.zip });
       setTimeout(() => gated.querySelectorAll(".fade-in").forEach(watchFade), 100);
     }
   }
@@ -158,6 +172,8 @@
     $("gate-error").textContent = "";
 
     const lead = {
+      kind: "lead",
+      sid: SiftTrack.sid,
       name, email,
       zip: p.zip, area: p.areaName, state: p.state,
       score: p.score, grade: p.grade,
@@ -402,8 +418,24 @@
   ["cta-main", "cta-guarantee", "cta-faq", "cta-sticky"].forEach((id) => {
     const el = $(id);
     el.href = checkoutHref;
-    el.addEventListener("click", () => track("InitiateCheckout", { content_name: "sift_shower_head", finish, qty }));
+    el.addEventListener("click", () => {
+      checkoutClicked = true;
+      track("InitiateCheckout", { content_name: "sift_shower_head", finish, qty });
+      SiftTrack.send("checkout_click", { zip: p.zip, detail: finish + " x" + qty + " via " + id });
+    });
   });
+
+  // Offer visibility — lets the dashboard distinguish "left before
+  // seeing the price" from "saw the price and left".
+  new IntersectionObserver((entries, obs) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        offerSeen = true;
+        SiftTrack.send("offer_seen", { zip: p.zip });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.2 }).observe($("offer"));
 
   $("sticky-title").textContent = lowScore ? "Your water scored " + p.score + "/100" : "Fix your water for " + SIFT_CONFIG.price;
   $("sticky-sub").textContent = SIFT_CONFIG.guaranteeDays + "-day money-back guarantee · Free shipping";

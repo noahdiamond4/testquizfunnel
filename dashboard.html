@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Sift — Funnel Dashboard</title>
+<style>
+  :root {
+    --bg: #0b1c24; --panel: #112933; --panel2: #0e222b;
+    --line: rgba(255,255,255,.08);
+    --text: #e8f3f5; --dim: #8fb0ba;
+    --aqua: #2dd4bf; --coral: #ff6b4a; --gold: #f4b942;
+    --green: #34d399; --red: #f87171; --blue: #60a5fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; line-height: 1.5;
+    padding: 24px clamp(16px, 4vw, 40px) 80px;
+  }
+  h1 { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; }
+  h1 span { color: var(--aqua); }
+  h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); margin-bottom: 14px; font-weight: 700; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .status-pill { font-size: .78rem; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+  .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--green); animation: pulse 1.6s infinite; }
+  .pulse.err { background: var(--red); animation: none; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+  .setup { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .setup input { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: .85rem; flex: 1; min-width: 200px; }
+  .setup button { background: var(--aqua); color: #06231f; border: none; border-radius: 9px; padding: 10px 18px; font-weight: 700; cursor: pointer; font-size: .85rem; }
+  .setup .hint { width: 100%; font-size: .76rem; color: var(--dim); }
+  .setup .hint a { color: var(--aqua); }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 20px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .stat .n { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+  .stat .l { font-size: .76rem; color: var(--dim); margin-top: 2px; }
+  .stat.live .n { color: var(--green); }
+  .stat.leads .n { color: var(--gold); }
+  .stat.conv .n { color: var(--coral); }
+
+  .cols { display: grid; gap: 16px; grid-template-columns: 1.1fr .9fr; align-items: start; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+
+  /* Funnel */
+  .frow { display: grid; grid-template-columns: 150px 1fr 88px; gap: 12px; align-items: center; padding: 5px 0; }
+  .frow .fl { font-size: .82rem; color: var(--dim); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ftrack { background: var(--panel2); border-radius: 6px; height: 26px; overflow: hidden; }
+  .fbar { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #0e7c8c, var(--aqua)); min-width: 2px; transition: width .6s ease; display: flex; align-items: center; padding-left: 8px; font-size: .75rem; font-weight: 700; color: #06231f; }
+  .frow .fd { font-size: .76rem; color: var(--red); white-space: nowrap; }
+  .frow .fd.ok { color: var(--dim); }
+
+  /* Feed */
+  .feed { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .ev { display: flex; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: .82rem; align-items: baseline; }
+  .ev:nth-child(odd) { background: var(--panel2); }
+  .ev .t { color: var(--dim); white-space: nowrap; font-size: .74rem; min-width: 58px; }
+  .ev .sid { color: var(--blue); font-family: monospace; font-size: .74rem; min-width: 70px; }
+  .ev .what { flex: 1; }
+  .ev.good .what { color: var(--green); }
+  .ev.money .what { color: var(--coral); font-weight: 700; }
+  .ev.bad .what { color: var(--red); }
+
+  /* Sessions table */
+  .sess { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .sess th { text-align: left; color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .sess td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .badge { display: inline-block; font-size: .7rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+  .b-live { background: rgba(52,211,153,.15); color: var(--green); }
+  .b-conv { background: rgba(255,107,74,.15); color: var(--coral); }
+  .b-lead { background: rgba(244,185,66,.15); color: var(--gold); }
+  .b-aband { background: rgba(248,113,113,.12); color: var(--red); }
+  .why { color: var(--dim); font-size: .78rem; }
+  .mono { font-family: monospace; font-size: .74rem; color: var(--blue); }
+  .empty { color: var(--dim); text-align: center; padding: 30px 10px; font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Sift<span>.</span> Funnel Dashboard</h1>
+  <div class="status-pill"><span class="pulse" id="pulse"></span><span id="status-text">connecting…</span></div>
+</div>
+
+<div class="setup" id="setup">
+  <input id="cfg-url" type="url" placeholder="Apps Script web app URL (https://script.google.com/macros/s/…/exec)" />
+  <input id="cfg-key" type="text" placeholder="Dashboard key" style="max-width:180px" />
+  <button id="cfg-save">Connect</button>
+  <div class="hint">Paste the same web app URL you put in <b>js/config.js</b> plus the <b>DASHBOARD_KEY</b> you set in the Apps Script. Add <a href="?demo=1">?demo=1</a> to the page URL to preview with sample data.</div>
+</div>
+
+<div class="grid">
+  <div class="stat live"><div class="n" id="st-live">–</div><div class="l">live right now</div></div>
+  <div class="stat"><div class="n" id="st-sessions">–</div><div class="l">sessions (24h)</div></div>
+  <div class="stat"><div class="n" id="st-complete">–</div><div class="l">finished the quiz (24h)</div></div>
+  <div class="stat leads"><div class="n" id="st-leads">–</div><div class="l">emails captured (24h)</div></div>
+  <div class="stat conv"><div class="n" id="st-checkout">–</div><div class="l">checkout clicks (24h)</div></div>
+</div>
+
+<div class="cols">
+  <div>
+    <div class="panel">
+      <h2>Funnel — where people drop (24h)</h2>
+      <div id="funnel"></div>
+    </div>
+    <div class="panel">
+      <h2>Sessions — who got stuck where</h2>
+      <div style="overflow-x:auto">
+        <table class="sess">
+          <thead><tr><th>Session</th><th>Status</th><th>ZIP</th><th>What happened</th><th>Last seen</th></tr></thead>
+          <tbody id="sessions"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Live activity</h2>
+    <div class="feed" id="feed"><div class="empty">Waiting for events…</div></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const DEMO = qs.get("demo") === "1";
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- config ----------
+  let cfg = JSON.parse(localStorage.getItem("sift_dash") || "{}");
+  $("cfg-url").value = cfg.url || "";
+  $("cfg-key").value = cfg.key || "";
+  $("cfg-save").onclick = () => {
+    cfg = { url: $("cfg-url").value.trim(), key: $("cfg-key").value.trim() };
+    localStorage.setItem("sift_dash", JSON.stringify(cfg));
+    poll();
+  };
+  if ((cfg.url && cfg.key) || DEMO) $("setup").style.display = DEMO ? "none" : "flex";
+
+  // ---------- stage model ----------
+  const STAGES = [
+    ["quiz_start",     "Landed on quiz"],
+    ["zip_submitted",  "Entered ZIP"],
+    ["q_concern",      "Q1 · concern"],
+    ["q_symptoms",     "Q2 · symptoms"],
+    ["q_hair",         "Q3 · hair"],
+    ["q_fixtures",     "Q4 · fixtures"],
+    ["q_showers",      "Q5 · showers"],
+    ["q_household",    "Q6 · household"],
+    ["quiz_completed", "Finished quiz"],
+    ["report_view",    "Saw report (gated)"],
+    ["gate_unlock",    "Gave email"],
+    ["offer_seen",     "Saw the offer"],
+    ["checkout_click", "Clicked checkout"],
+  ];
+  const RANK = Object.fromEntries(STAGES.map(([k], i) => [k, i]));
+
+  const NICE = {
+    quiz_start: "landed on the quiz", zip_submitted: "entered ZIP",
+    q_concern: "answered concern", q_symptoms: "answered symptoms",
+    q_hair: "answered hair", q_fixtures: "answered fixtures",
+    q_showers: "answered showers", q_household: "answered household",
+    quiz_completed: "finished the quiz", report_view: "opened their report",
+    gate_unlock: "unlocked with email ✉️", offer_seen: "scrolled to the offer",
+    checkout_click: "CLICKED CHECKOUT 💸", exit: "left",
+  };
+
+  const WHY = {
+    zip: "Bounced on the ZIP screen — never started",
+    concern: "Dropped on Q1 (concern)", symptoms: "Dropped on Q2 (symptoms)",
+    hair: "Dropped on Q3 (hair)", fixtures: "Dropped on Q4 (fixtures)",
+    showers: "Dropped on Q5 (showers)", household: "Dropped on Q6 (household)",
+    analyzing: "Left during report generation",
+    email_gate: "Hit the email gate and wouldn't trade their email",
+    report_before_offer: "Unlocked the report but left before seeing the price",
+    report_after_offer: "Saw the offer and price, then left without buying",
+  };
+
+  function rel(ts, now) {
+    const s = Math.max(0, Math.round((now - ts) / 1000));
+    if (s < 60) return s + "s ago";
+    if (s < 3600) return Math.round(s / 60) + "m ago";
+    if (s < 86400) return Math.round(s / 3600) + "h ago";
+    return Math.round(s / 86400) + "d ago";
+  }
+
+  // ---------- render ----------
+  function render(events) {
+    const now = Date.now();
+    const dayAgo = now - 86400e3;
+
+    // rows: [ts, sid, type, step, detail, zip, device, page]
+    const evs = events.map((r) => ({
+      ts: new Date(r[0]).getTime(), sid: String(r[1]), type: String(r[2]),
+      step: String(r[3] || ""), detail: String(r[4] || ""),
+      zip: String(r[5] || "").replace(/^'/, ""), device: String(r[6] || ""),
+    })).filter((e) => e.ts && e.sid).sort((a, b) => a.ts - b.ts);
+
+    const dayEvs = evs.filter((e) => e.ts >= dayAgo);
+
+    // sessions
+    const sessions = new Map();
+    for (const e of dayEvs) {
+      let s = sessions.get(e.sid);
+      if (!s) { s = { sid: e.sid, first: e.ts, last: 0, max: -1, zip: "", device: e.device, exit: null, types: new Set() }; sessions.set(e.sid, s); }
+      s.last = Math.max(s.last, e.ts);
+      s.types.add(e.type);
+      if (e.zip) s.zip = e.zip;
+      if (e.type === "exit") s.exit = e;
+      if (RANK[e.type] !== undefined) s.max = Math.max(s.max, RANK[e.type]);
+    }
+    const sess = [...sessions.values()].sort((a, b) => b.last - a.last);
+
+    // status per session
+    for (const s of sess) {
+      if (s.types.has("checkout_click")) s.status = "converted";
+      else if (now - s.last < 120e3) s.status = "live";
+      else if (s.types.has("gate_unlock")) s.status = "lead";
+      else s.status = "abandoned";
+      const exitStep = s.exit && (s.exit.step || "");
+      s.why =
+        s.status === "converted" ? "Clicked through to checkout" + (s.exit ? "" : " — tab may still be open") :
+        s.status === "live" ? "Active right now — last: " + (NICE[[...s.types].pop()] || "browsing") :
+        s.status === "lead" ? "Gave email" + (s.types.has("offer_seen") ? ", saw the offer, hasn't bought yet" : ", hasn't reached the offer yet") :
+        (WHY[exitStep] || (s.max >= 0 ? "Went quiet after: " + STAGES[s.max][1] : "Bounced immediately"));
+      if (s.exit && s.exit.detail && s.status === "abandoned") s.why += " · answers: " + s.exit.detail;
+    }
+
+    // stats
+    $("st-live").textContent = sess.filter((s) => s.status === "live").length;
+    $("st-sessions").textContent = sess.length;
+    $("st-complete").textContent = sess.filter((s) => s.max >= RANK.quiz_completed).length;
+    $("st-leads").textContent = sess.filter((s) => s.types.has("gate_unlock")).length;
+    $("st-checkout").textContent = sess.filter((s) => s.types.has("checkout_click")).length;
+
+    // funnel
+    const total = sess.length || 1;
+    let prev = null;
+    $("funnel").innerHTML = STAGES.map(([key, label], i) => {
+      const n = sess.filter((s) => s.max >= i).length;
+      const pct = Math.round((n / total) * 100);
+      const drop = prev === null || prev === 0 ? null : Math.round((1 - n / prev) * 100);
+      prev = n;
+      return '<div class="frow"><div class="fl">' + label + '</div>' +
+        '<div class="ftrack"><div class="fbar" style="width:' + Math.max(2, pct) + '%">' + n + '</div></div>' +
+        '<div class="fd ' + (drop !== null && drop > 25 ? "" : "ok") + '">' +
+        (drop === null ? "" : (drop > 0 ? "−" + drop + "% drop" : "—")) + '</div></div>';
+    }).join("");
+
+    // feed
+    const feedEvs = evs.slice(-60).reverse();
+    $("feed").innerHTML = feedEvs.length ? feedEvs.map((e) => {
+      const cls = e.type === "checkout_click" ? "money" : (e.type === "gate_unlock" || e.type === "quiz_completed") ? "good" : e.type === "exit" ? "bad" : "";
+      const what = e.type === "exit"
+        ? "left (" + (WHY[e.step] ? WHY[e.step].toLowerCase() : e.step) + ")"
+        : (NICE[e.type] || e.type) + (e.detail ? " — " + e.detail : "") + (e.zip ? " · " + e.zip : "");
+      return '<div class="ev ' + cls + '"><span class="t">' + rel(e.ts, now) + '</span><span class="sid">' + e.sid.slice(-6) + '</span><span class="what">' + what.replace(/</g, "&lt;") + '</span></div>';
+    }).join("") : '<div class="empty">No events yet. Run through the quiz and watch this fill up.</div>';
+
+    // sessions table
+    $("sessions").innerHTML = sess.slice(0, 40).map((s) => {
+      const b = s.status === "live" ? "b-live" : s.status === "converted" ? "b-conv" : s.status === "lead" ? "b-lead" : "b-aband";
+      return "<tr><td class='mono'>" + s.sid.slice(-6) + "<br><span class='why'>" + (s.device || "") + "</span></td>" +
+        "<td><span class='badge " + b + "'>" + s.status + "</span></td>" +
+        "<td>" + (s.zip || "—") + "</td>" +
+        "<td>" + s.why.replace(/</g, "&lt;") + "</td>" +
+        "<td class='why'>" + rel(s.last, now) + "</td></tr>";
+    }).join("") || "<tr><td colspan='5' class='empty'>No sessions in the last 24h.</td></tr>";
+  }
+
+  // ---------- data ----------
+  let timer = null;
+  async function poll() {
+    clearTimeout(timer);
+    try {
+      let events;
+      if (DEMO) {
+        events = demoEvents();
+      } else {
+        if (!cfg.url || !cfg.key) { setStatus(false, "not connected — paste your webhook URL + key above"); return; }
+        const res = await fetch(cfg.url + (cfg.url.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(cfg.key) + "&limit=2000");
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || "backend error");
+        events = json.events;
+      }
+      render(events);
+      setStatus(true, "live · refreshes every 10s · updated " + new Date().toLocaleTimeString());
+    } catch (err) {
+      setStatus(false, "connection failed: " + err.message);
+    }
+    timer = setTimeout(poll, 10000);
+  }
+  function setStatus(ok, text) {
+    $("pulse").classList.toggle("err", !ok);
+    $("status-text").textContent = text;
+  }
+
+  // ---------- demo data ----------
+  function demoEvents() {
+    const out = [];
+    const now = Date.now();
+    const zips = ["85032", "89109", "10001", "33602", "97201", "60614", "78704"];
+    const seq = ["quiz_start", "zip_submitted", "q_concern", "q_symptoms", "q_hair", "q_fixtures", "q_showers", "q_household", "quiz_completed", "report_view", "gate_unlock", "offer_seen", "checkout_click"];
+    for (let i = 0; i < 28; i++) {
+      const sid = "demo-" + i.toString(36).padStart(4, "0");
+      const zip = zips[i % zips.length];
+      const depth = i % 4 === 0 ? seq.length : 2 + Math.floor(Math.random() * (seq.length - 2));
+      const start = now - Math.random() * 86000e3;
+      for (let j = 0; j < depth; j++) {
+        out.push([new Date(start + j * 25e3).toISOString(), sid, seq[j], "", j === 1 ? "Phoenix · score 18" : "", zip, Math.random() > .3 ? "mobile" : "desktop", "index.html"]);
+      }
+      if (depth < seq.length && Math.random() > .25) {
+        const stuck = depth <= 8 ? ["zip","concern","symptoms","hair","fixtures","showers","household","analyzing"][Math.max(0,depth-1)] : depth <= 10 ? "email_gate" : "report_after_offer";
+        out.push([new Date(start + depth * 25e3).toISOString(), sid, "exit", stuck, "concern:hair fixtures:black", zip, "mobile", "index.html"]);
+      }
+    }
+    // one live session
+    out.push([new Date(now - 20e3).toISOString(), "demo-live", "quiz_start", "", "", "", "mobile", "index.html"]);
+    out.push([new Date(now - 8e3).toISOString(), "demo-live", "zip_submitted", "", "Las Vegas · score 22", "89109", "mobile", "index.html"]);
+    return out;
+  }
+
+  poll();
+})();
+</script>
+</body>
+</html>

@@ -16,9 +16,25 @@
     household: "",
   };
   let profile = null;
+  let completed = false;
+  let currentStep = 0;
+  const STEP_NAMES = ["zip", "concern", "symptoms", "hair", "fixtures", "showers", "household", "analyzing"];
 
   const progressEl = document.getElementById("progress");
   const steps = document.querySelectorAll(".step");
+
+  // -------- Funnel events --------
+  SiftTrack.send("quiz_start");
+  window.addEventListener("pagehide", () => {
+    if (!completed) {
+      SiftTrack.send("exit", {
+        step: STEP_NAMES[currentStep],
+        detail: Object.entries(answers).filter(([, v]) => v && v.length)
+          .map(([k, v]) => k + ":" + (Array.isArray(v) ? v.join("+") : v)).join(" "),
+        zip: answers.zip,
+      });
+    }
+  });
 
   // -------- Facebook Pixel (optional) --------
   if (SIFT_CONFIG.fbPixelId) {
@@ -36,6 +52,7 @@
   }
 
   function goTo(step) {
+    currentStep = step;
     steps.forEach((s) => s.classList.toggle("active", +s.dataset.step === step));
     progressEl.style.width = Math.round((step / (TOTAL_STEPS - 1)) * 100) + "%";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -65,6 +82,7 @@
     document.getElementById("s1-kicker").textContent =
       "Pulling water data for " + p.areaName + "…";
     track("Lead", { content_name: "quiz_zip_submitted" });
+    SiftTrack.send("zip_submitted", { zip, detail: p.areaName + " · score " + p.score });
     goTo(1);
   }
   document.getElementById("zip-go").addEventListener("click", submitZip);
@@ -83,6 +101,7 @@
         group.querySelectorAll(".option").forEach((o) => o.classList.remove("selected"));
         opt.classList.add("selected");
         answers[q] = opt.dataset.val;
+        SiftTrack.send("q_" + q, { detail: opt.dataset.val, zip: answers.zip });
         setTimeout(() => {
           const next = stepAfter[q];
           goTo(next);
@@ -113,11 +132,16 @@
       symptomsNext.disabled = answers.symptoms.length === 0;
     });
   });
-  symptomsNext.addEventListener("click", () => goTo(3));
+  symptomsNext.addEventListener("click", () => {
+    SiftTrack.send("q_symptoms", { detail: answers.symptoms.join("+"), zip: answers.zip });
+    goTo(3);
+  });
 
   // -------- Step 7: analysis animation, then redirect --------
   function runAnalysis() {
+    completed = true;
     track("CompleteRegistration", { content_name: "quiz_completed" });
+    SiftTrack.send("quiz_completed", { zip: answers.zip });
 
     // Persist everything the report page needs.
     sessionStorage.setItem(
