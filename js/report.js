@@ -104,7 +104,12 @@
     ? "The national average is <strong>61</strong> — your water sits below the line most people assume they're above."
     : "The national average is <strong>61</strong>. Your water beats it — but unfiltered chlorine still strips moisture with every shower.";
 
-  requestAnimationFrame(() => {
+  // Gauge animation runs when the report unlocks (it sits behind
+  // the blur until then, so animating on load would be wasted).
+  let gaugeAnimated = false;
+  function animateGauge() {
+    if (gaugeAnimated) return;
+    gaugeAnimated = true;
     setTimeout(() => {
       arc.style.strokeDashoffset = ARC_LEN * (1 - p.score / 100);
       let n = 0;
@@ -117,8 +122,8 @@
         requestAnimationFrame(stepUp);
       };
       stepUp();
-    }, 300);
-  });
+    }, 350);
+  }
 
   // ============================================================
   // SECTION 3 — EMAIL GATE
@@ -128,6 +133,7 @@
 
   function unlock(skipAnimation) {
     gateZone.classList.add("unlocked");
+    animateGauge();
     if (!skipAnimation) {
       track("Lead", { content_name: "report_unlocked" });
       setTimeout(() => gated.querySelectorAll(".fade-in").forEach(watchFade), 100);

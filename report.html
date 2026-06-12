@@ -29,22 +29,7 @@
 
   <main class="report-body">
 
-    <!-- ============ SECTION 2: SCORE (never gated) ============ -->
-    <div class="card score-card fade-in">
-      <p class="section-label">Shower Water Score — ZIP <span id="score-zip"></span></p>
-      <div class="gauge">
-        <svg viewBox="0 0 210 120">
-          <path class="track" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
-          <path class="value" id="gauge-arc" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
-        </svg>
-        <div class="gauge-num" id="gauge-num">0</div>
-      </div>
-      <div><span class="gauge-grade" id="gauge-grade"></span></div>
-      <p class="score-benchmark" id="score-benchmark"></p>
-      <p class="score-note">This isn't a water <em>safety</em> problem — your water is legal to drink. It's a water <em>chemistry</em> problem. And chemistry doesn't care how good your shampoo is.</p>
-    </div>
-
-    <!-- ============ SECTION 3: EMAIL GATE ============ -->
+    <!-- ============ SECTION 3: EMAIL GATE (wraps the entire report) ============ -->
     <div class="gate-zone" id="gate-zone">
 
       <div class="gate-overlay" id="gate-overlay">
@@ -62,6 +47,21 @@
       </div>
 
       <div class="gated" id="gated">
+
+        <!-- ============ SECTION 2: SCORE ============ -->
+        <div class="card score-card fade-in">
+          <p class="section-label">Shower Water Score — ZIP <span id="score-zip"></span></p>
+          <div class="gauge">
+            <svg viewBox="0 0 210 120">
+              <path class="track" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
+              <path class="value" id="gauge-arc" d="M 15 110 A 90 90 0 0 1 195 110" fill="none" stroke-width="16" stroke-linecap="round"/>
+            </svg>
+            <div class="gauge-num" id="gauge-num">0</div>
+          </div>
+          <div><span class="gauge-grade" id="gauge-grade"></span></div>
+          <p class="score-benchmark" id="score-benchmark"></p>
+          <p class="score-note">This isn't a water <em>safety</em> problem — your water is legal to drink. It's a water <em>chemistry</em> problem. And chemistry doesn't care how good your shampoo is.</p>
+        </div>
 
         <!-- ============ SECTION 4: WHAT WE FOUND ============ -->
         <div class="card fade-in">
