@@ -5,58 +5,61 @@ built for paid traffic from Facebook/Instagram ads.
 
 ## Flow
 
-1. **`index.html` — the quiz.** Visitor enters their ZIP code (the hook: a free
-   water quality report). While the report "generates," they answer 4 more
-   questions (concern, symptoms, hair type, home age, household size). An
-   animated "analyzing" sequence builds anticipation, then redirects.
-2. **`report.html` — the personalized advertorial.** A water quality report for
-   their ZIP (score gauge, hardness, chlorine, contaminant flags) interwoven
-   with personalized callouts driven by their quiz answers, a product offer,
-   matched testimonials, a comparison table, FAQ, and a sticky CTA.
-3. **Checkout.** All CTAs link to `SIFT_CONFIG.checkoutUrl` with quiz data
-   appended as URL params (`zip`, `score`, `concern`, plus UTMs).
+1. **`index.html` — the quiz.** ZIP code (the hook: a free water report), then
+   6 questions: concern, symptoms, hair type, fixture finish, shower count,
+   household size. Animated "analyzing" sequence, then redirect.
+2. **`report.html` — the personalized advertorial.** Hero + score gauge are
+   shown free; everything below is **blurred behind an email gate**. After
+   unlock: findings, the absorption science section, answer-driven callouts,
+   cost-of-inaction math, the offer (variant + quantity pre-configured),
+   filter proof, testimonials, comparison table, guarantee, FAQ, sticky CTA.
+3. **Checkout.** CTAs build a Shopify cart permalink with the **finish variant**
+   (from the fixtures question) and **quantity** (from the shower-count
+   question): `https://{store}/cart/{variantId}:{qty}` + attribution params.
+   Falls back to `checkoutUrl` with params if variant IDs aren't set.
 
-## How personalization works
+## Lead capture → Google Sheets
 
-- `js/water-data.js` maps the ZIP prefix → state → a regional water profile
-  (hardness ppm, chlorine level, common contaminants) based on USGS regional
-  hardness patterns, with metro-level overrides for ~60 major cities
-  (Phoenix, Vegas, Indianapolis, Tampa, NYC, etc.). A deterministic per-ZIP
-  variance makes neighboring ZIPs read as distinct.
-- `js/report.js` composes the advertorial conditionally: every headline,
-  callout, benefit bullet, and testimonial set changes based on score,
-  hardness tier, chlorine level, and the visitor's answers.
-- No backend required — answers pass between pages via `sessionStorage`.
-  Direct visits to `report.html` redirect back to the quiz.
+Every report unlock POSTs the lead (name, email, ZIP, score, all answers) to
+a Google Apps Script webhook that appends a row to your Sheet.
 
-## Setup
+Setup (~3 min): follow the comments at the top of
+`google-apps-script/lead-capture.gs`, then paste the deployed web-app URL
+into `js/config.js` as `leadWebhookUrl`. Returning visitors who already
+unlocked skip the gate (stored in `localStorage`).
 
-Edit `js/config.js`:
+## Configuration — `js/config.js`
 
-- `checkoutUrl` — your Shopify product/checkout URL (CTAs append attribution params)
-- `price` / `compareAtPrice` / `guaranteeDays`
-- `fbPixelId` — your Meta Pixel ID. Fires `PageView`, `Lead` (ZIP submitted),
-  `CompleteRegistration` (quiz finished), `ViewContent` (report viewed), and
-  `InitiateCheckout` (CTA click).
+- `shopifyDomain` + `variantIds.black` / `variantIds.chrome` — cart routing
+- `checkoutUrl` — fallback product URL
+- `leadWebhookUrl` — Apps Script web-app URL for the Sheets export
+- `price`, `compareAtPrice`, `guaranteeDays`
+- `fbPixelId` — Meta Pixel (PageView, Lead ×2, CompleteRegistration,
+  ViewContent, InitiateCheckout)
+
+## Images
+
+Six files go in `images/` — see `images/README.md` for filenames, aspect
+ratios, and the drag-and-drop GitHub upload path. Missing images degrade
+gracefully (sections render without them).
 
 ## Deploy
 
-Pure static files — drop on Vercel, Netlify, Cloudflare Pages, or S3.
+Pure static files — Vercel, Netlify, Cloudflare Pages, S3, or GitHub Pages.
 No build step.
 
 ```bash
 # local preview
 python3 -m http.server 8000
-# open http://localhost:8000
 ```
 
 ## Compliance notes (read before scaling spend)
 
-- Water figures are **regional estimates**, not lab results. The report page
-  discloses this in its methodology footnote — keep that footnote. For exact
-  per-utility data, consider integrating the EPA SDWIS API or EWG Tap Water
-  Database on a small backend.
-- The "reduces chlorine up to 98%", filter-life, and testimonial copy are
-  **placeholders** — replace them with your actual lab results and real
-  customer reviews before running ads. Meta and the FTC both require
-  substantiation for performance claims and genuine testimonials.
+- Water figures are **regional estimates**, not lab results — the report
+  footnote discloses this; keep it. For utility-exact data, integrate the
+  EPA SDWIS API or EWG Tap Water Database later.
+- "Reduces chlorine up to 98%", filter-life, and testimonials are
+  **placeholders** — replace with your lab results and real reviews before
+  running ads (FTC + Meta substantiation rules).
+- The email gate sends marketing email — keep the consent microcopy and an
+  unsubscribe path (CAN-SPAM).

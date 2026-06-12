@@ -1,8 +1,9 @@
 // ============================================================
 // Sift — Personalized Report Page
 // Reads quiz answers + water profile from sessionStorage and
-// composes the advertorial. If someone lands here directly
-// (no quiz data), they're sent back to the quiz.
+// composes the advertorial. Gates the full report behind an
+// email unlock, exports the lead to Google Sheets, and routes
+// checkout by fixture color (variant) and shower count (qty).
 // ============================================================
 
 (function () {
@@ -12,6 +13,7 @@
   const { answers, profile } = JSON.parse(raw);
   const p = profile;
   const a = answers;
+  const $ = (id) => document.getElementById(id);
 
   // -------- Pixel --------
   if (SIFT_CONFIG.fbPixelId && !window.fbq) {
@@ -25,59 +27,83 @@
     fbq("track", "PageView");
     fbq("track", "ViewContent", { content_name: "water_report" });
   }
-
-  const $ = (id) => document.getElementById(id);
+  function track(event, data) { if (window.fbq) fbq("track", event, data || {}); }
 
   // -------- Derived severity helpers --------
-  const hardBad = p.hardnessTier >= 2;       // hard or very hard
+  const hardBad = p.hardnessTier >= 2;
   const hardMid = p.hardnessTier === 1;
   const chlorBad = p.chlorineLevel >= 3;
   const lowScore = p.score < 55;
+  const sym = new Set(a.symptoms || []);
 
-  const CONCERN_WORDS = {
-    hair: "your hair",
-    skin: "your skin",
-    scalp: "your scalp",
-    curious: "your hair and skin",
-  };
+  const CONCERN_WORDS = { hair: "your hair", skin: "your skin", scalp: "your scalp", curious: "your hair and skin" };
   const concernWord = CONCERN_WORDS[a.concern] || "your hair and skin";
 
-  // -------- HERO --------
-  $("hero-kicker").textContent = "Water Report · " + p.areaName + " · ZIP " + p.zip;
+  // National-average benchmark framing (avg score ~61).
+  const percentile = Math.max(2, Math.min(96, Math.round((p.score / 94) * 100)));
+
+  // -------- Checkout routing: color variant + quantity --------
+  const finish = a.fixtures === "chrome" ? "chrome" : "black"; // mixed/unsure -> black (premium default)
+  const finishLabel = finish === "chrome" ? "Chrome" : "Gloss Black";
+  const qty = Math.max(1, Math.min(3, parseInt(a.showers || "1", 10)));
+
+  function buildCheckoutUrl() {
+    const params = new URLSearchParams({
+      utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
+      zip: p.zip, score: p.score, concern: a.concern || "", finish, qty,
+    });
+    const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[finish];
+    if (variantId) {
+      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + qty + "?" + params.toString();
+    }
+    const base = SIFT_CONFIG.checkoutUrl;
+    return base + (base.includes("?") ? "&" : "?") + params.toString();
+  }
+  const checkoutHref = buildCheckoutUrl();
+
+  // ============================================================
+  // SECTION 1 — HERO
+  // ============================================================
+  $("hero-kicker").textContent = "Official Water Analysis · " + p.areaName + " · ZIP " + p.zip;
   if (lowScore) {
     $("hero-headline").textContent =
-      "Your water in " + p.areaName + " scored " + p.score + "/100 — and it shows up in " + concernWord + ".";
+      "Your water scored " + p.score + " out of 100. " +
+      (a.concern === "skin" ? "Your skin found out before you did."
+        : a.concern === "scalp" ? "Your scalp found out before you did."
+        : "Your hair found out before you did.");
   } else if (p.score < 70) {
     $("hero-headline").textContent =
-      "Your water in " + p.areaName + " scored " + p.score + "/100. Here's what that means for " + concernWord + ".";
+      "Your water scored " + p.score + " out of 100 — and the missing " + (100 - p.score) + " points land on " + concernWord + ".";
   } else {
     $("hero-headline").textContent =
-      "Good news and bad news about your water in " + p.areaName + ".";
+      "Your water scored " + p.score + " out of 100. Here's what's in the gap.";
   }
   $("hero-sub").textContent =
-    "Based on regional water data for ZIP " + p.zip + " and your " +
-    "answers, here's what's coming out of your shower head — and what it's doing every time you rinse.";
+    "We cross-referenced regional water data for ZIP " + p.zip + " with your answers. " +
+    "What's coming out of your shower head explains almost everything you told us — " +
+    "the symptoms, the products that stopped working, all of it. Here's your full report.";
 
-  // -------- SCORE GAUGE --------
+  // ============================================================
+  // SECTION 2 — SCORE
+  // ============================================================
   $("score-zip").textContent = p.zip;
   const arc = $("gauge-arc");
-  const ARC_LEN = Math.PI * 90; // semicircle r=90
+  const ARC_LEN = Math.PI * 90;
   arc.style.strokeDasharray = ARC_LEN;
   arc.style.strokeDashoffset = ARC_LEN;
-  const color = p.score < 55 ? "#d9534f" : p.score < 70 ? "#f4b942" : "#1e9e6a";
+  const color = p.score < 55 ? "#d9534f" : p.score < 70 ? "#e09a17" : "#1e9e6a";
   arc.style.stroke = color;
 
   const gradeEl = $("gauge-grade");
   gradeEl.textContent = "Grade: " + p.grade;
   gradeEl.className = "gauge-grade " + (p.score < 55 ? "grade-bad" : p.score < 70 ? "grade-mid" : "grade-good");
 
-  $("score-note").textContent = lowScore
-    ? "Scores below 55 indicate water that actively works against " + concernWord + " — most homes in " + p.areaName + " fall in this range."
+  $("score-benchmark").innerHTML = lowScore
+    ? "The national average is <strong>61</strong>. Your water ranks in the <strong>bottom " + Math.max(5, Math.round(percentile / 2)) + "% of US ZIP codes</strong> for hair and skin compatibility."
     : p.score < 70
-    ? "A score in this range means your water is doing low-grade, daily damage most people blame on their products."
-    : "Your water is better than most — but unfiltered chlorine and trace sediment still strip moisture with every shower.";
+    ? "The national average is <strong>61</strong> — your water sits below the line most people assume they're above."
+    : "The national average is <strong>61</strong>. Your water beats it — but unfiltered chlorine still strips moisture with every shower.";
 
-  // Animate gauge + counter after layout
   requestAnimationFrame(() => {
     setTimeout(() => {
       arc.style.strokeDashoffset = ARC_LEN * (1 - p.score / 100);
@@ -94,30 +120,95 @@
     }, 300);
   });
 
-  // -------- METRICS --------
-  $("findings-title").textContent = "Key findings for " + p.areaName;
+  // ============================================================
+  // SECTION 3 — EMAIL GATE
+  // ============================================================
+  const gateZone = $("gate-zone");
+  const gated = $("gated");
+
+  function unlock(skipAnimation) {
+    gateZone.classList.add("unlocked");
+    if (!skipAnimation) {
+      track("Lead", { content_name: "report_unlocked" });
+      setTimeout(() => gated.querySelectorAll(".fade-in").forEach(watchFade), 100);
+    }
+  }
+
+  $("gate-sub").textContent =
+    "The complete analysis for ZIP " + p.zip + " — what we found in your water, what it's doing to " +
+    concernWord.replace("your ", "your ") + ", and exactly how to fix it — is one step away.";
+
+  const existingLead = localStorage.getItem("sift_lead");
+
+  $("gate-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("gate-name").value.trim();
+    const email = $("gate-email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      $("gate-error").textContent = "Please enter a valid email address.";
+      $("gate-email").focus();
+      return;
+    }
+    $("gate-error").textContent = "";
+
+    const lead = {
+      name, email,
+      zip: p.zip, area: p.areaName, state: p.state,
+      score: p.score, grade: p.grade,
+      hardnessPpm: p.hardnessPpm, hardnessLabel: p.hardnessLabel,
+      chlorine: p.chlorineLabel,
+      concern: a.concern, symptoms: (a.symptoms || []).join("|"),
+      hair: a.hair, fixtures: a.fixtures, finish, showers: a.showers, household: a.household,
+      page: location.href, ts: new Date().toISOString(),
+    };
+    localStorage.setItem("sift_lead", JSON.stringify({ email, ts: Date.now() }));
+
+    // Export to Google Sheets via Apps Script webhook (fire & forget).
+    if (SIFT_CONFIG.leadWebhookUrl) {
+      try {
+        fetch(SIFT_CONFIG.leadWebhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(lead),
+        });
+      } catch (err) { /* never block the unlock on analytics */ }
+    }
+    unlock(false);
+  });
+
+  // Returning visitor who already unlocked once: skip the gate.
+  if (existingLead) unlock(true);
+
+  // ============================================================
+  // SECTION 4 — WHAT WE FOUND
+  // ============================================================
+  $("findings-title").textContent =
+    (a.concern === "skin" ? "Three things are hitting your skin every morning."
+      : a.concern === "scalp" ? "Three things are hitting your scalp every morning."
+      : "Three things are hitting your hair every morning.");
 
   const hClass = hardBad ? "bad" : hardMid ? "mid" : "good";
   const hv = $("hardness-val");
-  hv.textContent = p.hardnessLabel + " · ~" + p.hardnessPpm + " ppm";
+  hv.textContent = p.hardnessLabel.toUpperCase() + " · ~" + p.hardnessPpm + " ppm";
   hv.classList.add(hClass);
   const hBar = $("hardness-bar");
   hBar.classList.add(hClass);
   $("hardness-note").textContent = hardBad
-    ? "At ~" + p.hardnessGrains + " grains per gallon, your water carries heavy calcium and magnesium loads. These minerals bond to hair and skin, leaving the film that makes hair dull and skin tight."
+    ? p.areaName.charAt(0).toUpperCase() + p.areaName.slice(1).replace(/^the /, "") + " water carries one of the heavier mineral loads in America — roughly " + p.hardnessGrains + " grains of dissolved rock per gallon. Every shower, calcium and magnesium bond to your hair shaft the same way they crust onto your faucet. You scrub the faucet. Your hair just keeps it."
     : hardMid
-    ? "Moderately hard water still deposits enough mineral residue to build up on hair and skin over weeks of daily showers."
-    : "Your water is on the softer side — chlorine and sediment are the bigger factors in your area.";
+    ? "At ~" + p.hardnessGrains + " grains per gallon, your water deposits enough mineral residue to build a film on hair and skin over weeks of daily showers — slower than the hard-water states, but the direction is the same."
+    : "Your water is on the softer side — minerals aren't your main problem. Chlorine is.";
 
   const cClass = chlorBad ? "bad" : p.chlorineLevel === 2 ? "mid" : "good";
   const cv = $("chlorine-val");
-  cv.textContent = p.chlorineLabel;
+  cv.textContent = p.chlorineLabel.toUpperCase();
   cv.classList.add(cClass);
   const cBar = $("chlorine-bar");
   cBar.classList.add(cClass);
   $("chlorine-note").textContent = chlorBad
-    ? "Utilities in your region run disinfectant levels at the higher end of the EPA-allowed range. Hot showers vaporize chlorine, so you absorb and inhale it — that's the \"pool smell\" some people notice."
-    : "Your water is disinfected with chlorine or chloramine — safe to drink, but it strips the natural oils that keep skin and hair moisturized.";
+    ? "Your utility disinfects at the high end of the EPA-allowed range. That keeps the water safe in the pipe — and strips it onto you in the shower." + (sym.has("smell") ? " You know the smell. You told us you've noticed it." : "")
+    : "Your water is disinfected with chlorine or chloramine — safe to drink, but it strips the natural oils that keep skin and hair moisturized." + (sym.has("smell") ? " That smell you've noticed? That's it leaving the water." : "");
 
   const flags = $("flags");
   p.contaminants.forEach((c) => {
@@ -125,183 +216,210 @@
     li.textContent = c.charAt(0).toUpperCase() + c.slice(1);
     flags.appendChild(li);
   });
-  if (a.homeAge === "old") {
-    const li = document.createElement("li");
-    li.textContent = "Pipe sediment & metal traces — likely elevated given your 40+ year-old plumbing";
-    flags.appendChild(li);
-  }
 
-  // Animate bars on scroll into view
   setTimeout(() => {
     hBar.style.width = Math.min(96, Math.round((p.hardnessPpm / 320) * 100)) + "%";
     cBar.style.width = (p.chlorineLevel * 30 + 8) + "%";
   }, 600);
 
-  // -------- PERSONALIZED ANALYSIS --------
-  const sym = new Set(a.symptoms || []);
-  const personalBits = [];
+  // ============================================================
+  // SECTION 5 — THE SCIENCE
+  // ============================================================
+  $("science-lungs").textContent =
+    "Chlorine evaporates dramatically faster in hot water. A ten-minute hot shower in a closed bathroom is, functionally, ten minutes in a chlorine vapor room. " +
+    (sym.has("smell")
+      ? "That \"pool smell\" you told us you've noticed? That's the chlorine leaving the water — and you're the only thing in the room breathing."
+      : "That faint \"pool smell\" some showers have? That's the chlorine leaving the water — and you're the only thing in the room breathing.");
+  $("science-hair").textContent =
+    "Wet hair shafts swell open like pine cones. " +
+    (hardBad
+      ? "Hard-water minerals slip in, then harden as the hair dries — a microscopic mineral cast, every single day. It's why hair in " + p.areaName + " feels \"coated,\" why lather dies, and why conditioner sits on top instead of sinking in."
+      : "Chlorinated water slips in and strips the proteins and oils that keep hair flexible — which is why even soft-water hair can feel dry and look dull by week's end.");
+  $("science-kicker").textContent =
+    "A 10-minute shower runs ~20 gallons over you. You drink about half a gallon a day. You're filtering the half gallon — and standing in the twenty.";
 
-  if (sym.has("buildup")) {
-    personalBits.push({
-      h: "That white crust on your faucets? It's on you, too.",
-      p: "You told us you see mineral spots on fixtures and glass. That's " + p.hardnessLabel.toLowerCase() + " water leaving its signature — and the same scale that crusts your faucet is depositing on " + concernWord + " every single shower. It just doesn't show as white flakes; it shows as dullness, dryness, and product that won't rinse clean.",
-    });
-  }
-  if (sym.has("smell")) {
-    personalBits.push({
-      h: "That \"pool smell\" is chlorine vaporizing onto you.",
-      p: "You noticed a chemical smell in the shower. Chlorine evaporates ~100x faster in hot water, which means your shower becomes a chlorine steam room. It's the same chemical that turns swimmers' hair brittle — just slower.",
-    });
-  }
-  if (sym.has("tight-skin")) {
-    personalBits.push({
-      h: "\"Squeaky clean\" skin isn't clean — it's stripped.",
-      p: "That tight feeling after a shower is your skin's lipid barrier being washed away by chlorine and bonded minerals. Moisturizer afterwards is patching damage that the water itself caused minutes earlier.",
-    });
-  }
-  if (sym.has("flat-hair")) {
-    personalBits.push({
-      h: "Your hair isn't the problem. The coating on it is.",
-      p: "Hair that feels heavy, coated, or won't lather is the classic signature of hard-water mineral film. It blocks conditioner from penetrating — which is why even good products seem to \"stop working\" in " + p.areaName + ".",
-    });
-  }
-  if (a.hair === "color") {
-    personalBits.push({
-      h: "Your color is fading faster than it should.",
-      p: "Chlorine oxidizes hair dye and minerals shift its tone (brassiness in blondes is usually hard water, not the toner). Colorists in hard-water areas routinely tell clients to filter their shower before booking another correction appointment.",
-    });
-  }
-  if (a.hair === "products") {
-    personalBits.push({
-      h: "You're investing in products — and your water is undoing them.",
-      p: "Quality shampoos and serums are formulated for neutral, soft water. At ~" + p.hardnessPpm + " ppm hardness, much of what you're paying for is neutralized before it can work.",
-    });
-  }
-  if (a.homeAge === "old" || a.homeAge === "mid") {
-    personalBits.push({
-      h: "Your building's plumbing adds its own layer.",
-      p: "Water leaves the treatment plant tested — then travels through miles of aging municipal mains and your building's own pipes. Older plumbing sheds sediment, rust, and metal traces that no city report accounts for. A filter at the shower head is the only thing that catches what your pipes add.",
-    });
-  }
-  if (sym.has("none") && personalBits.length === 0) {
-    personalBits.push({
-      h: "No visible symptoms yet — which is exactly the point.",
-      p: "Hard water and chlorine damage is cumulative. By the time it's visible as dullness, dryness, or fading color, the barrier damage is months in. Catching it while your water scores " + p.score + "/100 and you feel fine is the cheap version of this problem.",
-    });
-  }
+  // ============================================================
+  // SECTION 6 — YOUR ANSWERS, DECODED
+  // ============================================================
+  const bits = [];
+  if (sym.has("buildup")) bits.push({
+    h: "That crust on your fixtures? You're rinsing your hair in it.",
+    p: "You told us you see white buildup on faucets and glass. That's " + p.hardnessPpm + " ppm water leaving its signature on everything it touches — and \"everything\" includes you. On metal it looks like scale. On hair it looks like dullness. Same mineral. Same source. Every day.",
+  });
+  if (sym.has("tight-skin")) bits.push({
+    h: "\"Squeaky clean\" skin isn't clean — it's stripped.",
+    p: "That tight feeling after a shower is your skin's lipid barrier being washed away by chlorine and bonded minerals. The moisturizer you apply afterwards is patching damage the water caused minutes earlier.",
+  });
+  if (sym.has("flat-hair")) bits.push({
+    h: "Your hair isn't the problem. The coating on it is.",
+    p: "Hair that feels heavy, coated, or won't lather is the classic signature of hard-water mineral film. It blocks conditioner from penetrating — which is why even good products seem to \"stop working\" in " + p.areaName + ".",
+  });
+  if (a.hair === "color") bits.push({
+    h: "Your color is being paid for twice — once at the salon, once down the drain.",
+    p: "Chlorine oxidizes dye molecules. Minerals shift tone — the brassiness you keep toning out isn't your colorist's fault, and it isn't yours. In water like " + p.areaName + "'s, color fade isn't a maintenance problem. It's a plumbing problem.",
+  });
+  if (a.hair === "products") bits.push({
+    h: "You're investing in products — and your water is undoing them.",
+    p: "Quality shampoos and serums are formulated in labs using soft, neutral water. At ~" + p.hardnessPpm + " ppm, much of what you're paying for is neutralized before it can work.",
+  });
+  if (sym.has("none") && bits.length === 0) bits.push({
+    h: "No visible symptoms yet — which is exactly the point.",
+    p: "Hard water and chlorine damage is cumulative. By the time it shows as dullness, dryness, or fading color, the barrier damage is months in. Catching it while you still feel fine is the cheap version of this problem.",
+  });
 
   const hh = parseInt(a.household || "1", 10);
   const gallonsYear = (hh * 20 * 365).toLocaleString();
-  personalBits.push({
-    h: hh > 1 ? "Your household runs ~" + gallonsYear + " gallons of this water a year." : "You run ~" + gallonsYear + " gallons of this water over yourself a year.",
-    p: (hh > 1 ? "Across " + (a.household === "5" ? "five or more" : a.household) + " people, that's " : "That's ") +
-       "roughly " + gallonsYear + " gallons of " + p.hardnessLabel.toLowerCase() + ", " +
-       (chlorBad ? "heavily chlorinated" : "chlorinated") + " water across hair and skin annually — one small filter at the shower head treats all of it.",
+  const tubs = Math.round((hh * 20 * 365) / 60);
+  bits.push({
+    h: (hh > 1 ? "Your household pours ~" + gallonsYear + " gallons of this over itself per year."
+               : "You pour ~" + gallonsYear + " gallons of this over yourself per year."),
+    p: "Roughly " + tubs.toLocaleString() + " bathtubs of " + p.hardnessLabel.toLowerCase() + ", " +
+       (chlorBad ? "heavily chlorinated" : "chlorinated") + " water across hair and skin annually — through " +
+       (qty > 1 ? qty + " shower heads, all unfiltered." : "one shower head."),
   });
 
-  $("personal-title").textContent = "What your answers tell us, " + (lowScore ? "and why it adds up" : "in plain terms");
   const pb = $("personal-body");
-  personalBits.slice(0, 4).forEach((bit) => {
+  bits.slice(0, 4).forEach((bit) => {
     const div = document.createElement("div");
     div.className = "callout";
-    div.innerHTML = "<h3>" + bit.h + "</h3><p>" + bit.p + "</p>";
+    const h3 = document.createElement("h3"); h3.textContent = bit.h;
+    const para = document.createElement("p"); para.textContent = bit.p;
+    div.appendChild(h3); div.appendChild(para);
     pb.appendChild(div);
   });
 
-  // -------- NARRATIVE --------
-  $("narrative-1").textContent =
-    "If you've cycled through shampoos, conditioners, and moisturizers wondering why nothing sticks, here's the uncomfortable answer: in " +
-    p.areaName + ", the problem renews itself every morning. " +
-    (hardBad
-      ? "Water at ~" + p.hardnessPpm + " ppm hardness redeposits minerals faster than any product can remove them."
-      : "Chlorinated water strips your skin's barrier faster than any moisturizer can rebuild it.");
-  $("narrative-2").textContent =
-    "Dermatologists and trichologists have pointed at the same culprit for years: it's not your routine, it's your rinse. " +
-    "Every product you apply gets applied through this water and rinsed off with this water.";
+  // ============================================================
+  // SECTION 7 — COST OF DOING NOTHING
+  // ============================================================
+  $("cost-intro").textContent =
+    (a.hair === "color" || a.hair === "products"
+      ? "You told us you invest in your hair. Here's the uncomfortable arithmetic: quality shampoo, conditioner, masks" + (a.hair === "color" ? ", and toner" : "") + " run most people $30–60 a month — and every one of those formulas was designed in a lab using soft, neutral water. "
+      : "Even a simple routine — shampoo, soap, moisturizer — runs $20–40 a month, and every one of those formulas was designed for soft, neutral water. ") +
+    "At " + p.hardnessPpm + " ppm" + (chlorBad ? " with elevated chlorine" : "") + ", your water " +
+    (hardBad ? "neutralizes active ingredients and seals everything behind a mineral film the products can't get through."
+             : "strips what the products put in, almost as fast as they put it in.");
+  $("math-spend").textContent = (a.hair === "color" || a.hair === "products") ? "~$540" : "~$360";
+  $("math-price").textContent = SIFT_CONFIG.price;
 
-  // -------- OFFER --------
-  $("product-tagline").textContent =
-    "15-stage filtration tuned for " + (hardBad ? "hard-water regions like " : "water like ") + p.areaName + "'s.";
+  // ============================================================
+  // SECTION 8 — THE TURN
+  // ============================================================
+  $("turn-1").textContent =
+    "Every product you use is applied through this water and rinsed off with this water. As long as the last thing touching " +
+    concernWord + " is " + p.hardnessPpm + " ppm chlorinated water, the last word belongs to the water.";
+  $("turn-2").textContent =
+    "Three ways to deal with that: a whole-home softener ($2,000–$6,000, a plumber, impossible in a rental). Doing nothing " +
+    "(you've been running that experiment — you described the results in your quiz). Or filtering at the exact point your body " +
+    "meets the water: the shower head itself.";
+
+  // ============================================================
+  // SECTION 9 — THE PRODUCT
+  // ============================================================
+  $("product-headline").textContent = "Sift. Configured for ZIP " + p.zip + ".";
+  $("product-img").src = finish === "chrome" ? "images/product-chrome.jpg" : "images/product-black.jpg";
+  $("product-img").alt = "The Sift filtered shower head in " + finishLabel;
 
   const benefits = [];
-  benefits.push("<strong>Reduces chlorine up to 98%</strong> — the #1 cause of stripped, dry " + (a.concern === "skin" ? "skin" : "hair and skin"));
-  if (hardBad || hardMid) benefits.push("<strong>KDF-55 + calcium sulfite media</strong> targets the hard-water minerals behind buildup and dullness");
-  benefits.push("<strong>Captures sediment, rust & pipe particles</strong>" + (a.homeAge === "old" ? " — important for your 40+ year-old plumbing" : " before they reach you"));
-  if (a.hair === "color") benefits.push("<strong>Protects color-treated hair</strong> — slower fade, less brassiness between salon visits");
+  benefits.push("<strong>15-stage filtration with KDF-55 + calcium sulfite</strong> — the media combination for " + (hardBad ? "very hard, high-chlorine water like " + p.areaName + "'s" : "chlorinated water like " + p.areaName + "'s"));
+  benefits.push("<strong>Reduces chlorine up to 98%</strong> — the #1 cause of stripped " + (a.concern === "skin" ? "skin" : "hair and fading color"));
+  benefits.push("<strong>Captures sediment, rust &amp; pipe particles</strong> before they reach you");
+  if (a.hair === "color") benefits.push("<strong>Color-safe by design</strong> — slower fade, less brass between salon visits");
   if (a.concern === "scalp") benefits.push("<strong>Gentler on the scalp</strong> — removing chlorine helps calm flaking and itch for many users");
-  benefits.push("<strong>Spa-grade pressure</strong> from a precision spray plate — filtration without the trickle");
+  benefits.push("<strong>Spa-grade pressure</strong> — filtration without the trickle");
   $("benefits").innerHTML = benefits.slice(0, 5).map((b) => "<li>" + b + "</li>").join("");
 
-  $("price-now").textContent = SIFT_CONFIG.price;
+  $("finish-row").innerHTML =
+    (a.fixtures === "mixed"
+      ? "<span class='finish-note'>Most-loved finish:</span> <strong>Your Sift: " + finishLabel + "</strong> <span class='finish-alt'>· " + (finish === "chrome" ? "Gloss Black" : "Chrome") + " available</span>"
+      : "<span class='finish-note'>You told us your fixtures are " + (finish === "chrome" ? "silver/chrome" : "black") + ".</span> <strong>Your Sift: " + finishLabel + "</strong> <span class='finish-alt'>· " + (finish === "chrome" ? "Gloss Black" : "Chrome") + " also available</span>");
+
   $("price-was").textContent = SIFT_CONFIG.compareAtPrice;
-  const pct = Math.round(
-    (1 - parseFloat(SIFT_CONFIG.price.replace(/[^0-9.]/g, "")) / parseFloat(SIFT_CONFIG.compareAtPrice.replace(/[^0-9.]/g, ""))) * 100
-  );
+  $("price-now").textContent = SIFT_CONFIG.price;
+  const pct = Math.round((1 - parseFloat(SIFT_CONFIG.price.replace(/[^0-9.]/g, "")) / parseFloat(SIFT_CONFIG.compareAtPrice.replace(/[^0-9.]/g, ""))) * 100);
   $("price-badge").textContent = "Save " + pct + "%";
-  $("compare-price").textContent = SIFT_CONFIG.price;
+
+  $("cta-main").textContent = "Get My Sift — " + finishLabel + " →";
+  $("cta-micro").textContent =
+    (qty > 1 ? "Quantity set to " + qty + " — one for each shower you told us about (adjustable at checkout). " : "") +
+    "Your report and configuration are saved for 24 hours.";
+
   $("guarantee-title").textContent = SIFT_CONFIG.guaranteeDays + "-Day \"Feel the Difference\" Guarantee";
-  $("faq-guarantee").textContent =
-    "Then it costs you nothing. You have " + SIFT_CONFIG.guaranteeDays + " days to shower with Sift. If you don't feel a difference in your " +
-    (a.concern === "skin" ? "skin" : a.concern === "scalp" ? "scalp" : "hair and skin") +
-    ", return it for a full refund — including return shipping.";
-  $("faq-filter-life").textContent =
-    "About 3–4 months of typical use. " +
-    (hh >= 3 ? "For a household your size, replacement filters ship on a schedule you control — cancel anytime." : "Replacement filters take 30 seconds to swap and ship automatically if you want them to — cancel anytime.");
 
-  // -------- TESTIMONIALS (matched to profile) --------
+  // ============================================================
+  // SECTION 10 — PROOF
+  // ============================================================
+  $("proof-headline").textContent =
+    (hardBad ? "Ninety days in " + p.areaName.replace(/^the /, "") + " water. This is what didn't reach you."
+             : "Ninety days of filtering. This is what didn't reach you.");
+
+  // ============================================================
+  // SECTION 11 — TESTIMONIALS
+  // ============================================================
   const T = [];
-  if (hardBad) T.push({ stars: 5, text: "I live with seriously hard water and assumed my hair was just like this now. Two weeks with Sift and my conditioner actually lathers and rinses clean. I'm annoyed I waited.", who: "Melissa R.", where: "hard-water area" });
-  if (a.hair === "color") T.push({ stars: 5, text: "My colorist asked what I changed because my blonde stopped going brassy between appointments. It was the shower head. That's it.", who: "Dana K.", where: "color-treated hair" });
-  if (sym.has("tight-skin") || a.concern === "skin") T.push({ stars: 5, text: "The tight, itchy feeling after showers is just… gone. I've cut my body lotion use in half.", who: "Priya S.", where: "dry skin" });
-  if (a.concern === "scalp") T.push({ stars: 5, text: "Flaky scalp for years, tried every shampoo. Filtering the chlorine out is the only thing that's calmed it down.", who: "Marcus T.", where: "scalp issues" });
-  T.push({ stars: 5, text: "Installed it in two minutes, no tools. Pressure is honestly better than my old shower head.", who: "Jordan L.", where: "verified buyer" });
-  T.push({ stars: 4, text: "Took about a week to notice, but my hair is visibly shinier and my husband's dandruff improved. Filter swap is easy.", who: "Caitlin M.", where: "verified buyer" });
+  if (hardBad) T.push({ s: 5, t: "I live with seriously hard water and assumed my hair was just like this now. Two weeks in, my conditioner actually lathers and rinses clean. I'm annoyed I waited.", w: "Melissa R.", d: "hard-water area" });
+  if (a.hair === "color") T.push({ s: 5, t: "My colorist asked what I changed, because my blonde stopped going brassy between appointments. It was the shower head. That's it.", w: "Dana K.", d: "color-treated hair" });
+  if (sym.has("tight-skin") || a.concern === "skin") T.push({ s: 5, t: "The tight, itchy feeling after showers is just… gone. I've cut my body lotion use in half.", w: "Priya S.", d: "dry skin" });
+  if (a.concern === "scalp") T.push({ s: 5, t: "Flaky scalp for years, tried every shampoo. Filtering the chlorine out is the only thing that's calmed it down.", w: "Marcus T.", d: "scalp issues" });
+  T.push({ s: 5, t: "Installed in two minutes, no tools. Pressure is honestly better than my old head.", w: "Jordan L.", d: "verified buyer" });
+  T.push({ s: 4, t: "Took about a week to notice, but my hair is visibly shinier and my husband's dandruff improved.", w: "Caitlin M.", d: "verified buyer" });
 
-  $("testimonial-title").textContent = "From people with water like " + p.areaName + "'s";
+  $("testimonial-title").textContent = "What changed for people with water like " + p.areaName + "'s.";
   $("testimonials").innerHTML = T.slice(0, 4).map((t) =>
-    '<div class="testimonial"><div class="stars">' + "★".repeat(t.stars) + "☆".repeat(5 - t.stars) + "</div><p>“" + t.text + "”</p><div class='who'>" + t.who + " <span>· " + t.where + "</span></div></div>"
+    '<div class="testimonial"><div class="stars">' + "★".repeat(t.s) + "☆".repeat(5 - t.s) +
+    "</div><p>“" + t.t + "”</p><div class='who'>" + t.w + " <span>· " + t.d + "</span></div></div>"
   ).join("");
 
-  // -------- CTAs --------
-  const params = new URLSearchParams({
-    utm_source: "quiz_funnel",
-    utm_medium: "report",
-    utm_campaign: "water_report",
-    zip: p.zip,
-    score: p.score,
-    concern: a.concern || "",
-  });
-  const checkoutHref = SIFT_CONFIG.checkoutUrl + (SIFT_CONFIG.checkoutUrl.includes("?") ? "&" : "?") + params.toString();
-  ["cta-main", "cta-faq", "cta-sticky"].forEach((id) => {
+  // ============================================================
+  // SECTIONS 12–14 — COMPARISON / GUARANTEE / FAQ
+  // ============================================================
+  $("compare-headline").textContent = "Your three options in " + p.areaName.replace(/^the /, "") + ".";
+  $("compare-price").textContent = SIFT_CONFIG.price;
+
+  $("guarantee-headline").textContent = "Shower on it for " + SIFT_CONFIG.guaranteeDays + " days. Then decide.";
+  $("guarantee-body").textContent =
+    "Install Sift. Live with it. If " + concernWord + " " + (a.concern === "curious" ? "don't" : (concernWord.includes("and") ? "don't" : "doesn't")) +
+    " feel the difference within " + SIFT_CONFIG.guaranteeDays + " days, send it back for a full refund — we cover return shipping. " +
+    "The only way to know what your water has been doing is to feel what happens when it stops.";
+  $("guarantee-price").textContent = SIFT_CONFIG.price;
+
+  $("faq-filter-life").textContent =
+    "3–4 months typical. " +
+    (hardBad ? "In very hard water like yours, we recommend the refill schedule — 30-second swap, cancel anytime."
+             : "Replacement filters swap in 30 seconds and ship on a schedule you control — cancel anytime.");
+  $("faq-guarantee").textContent =
+    "Then it costs you nothing — " + SIFT_CONFIG.guaranteeDays + " days, full refund, return shipping on us.";
+  $("faq-micro").textContent = "ZIP " + p.zip + " · Report expires in 24 hours · " + SIFT_CONFIG.guaranteeDays + "-day guarantee";
+
+  // ============================================================
+  // CTAs + STICKY
+  // ============================================================
+  ["cta-main", "cta-guarantee", "cta-faq", "cta-sticky"].forEach((id) => {
     const el = $(id);
     el.href = checkoutHref;
-    el.addEventListener("click", () => {
-      if (window.fbq) fbq("track", "InitiateCheckout", { content_name: "sift_shower_head" });
-    });
+    el.addEventListener("click", () => track("InitiateCheckout", { content_name: "sift_shower_head", finish, qty }));
   });
 
-  // -------- Sticky CTA --------
-  $("sticky-title").textContent = lowScore
-    ? "Your water scored " + p.score + "/100"
-    : "Fix your water for " + SIFT_CONFIG.price;
+  $("sticky-title").textContent = lowScore ? "Your water scored " + p.score + "/100" : "Fix your water for " + SIFT_CONFIG.price;
   $("sticky-sub").textContent = SIFT_CONFIG.guaranteeDays + "-day money-back guarantee · Free shipping";
 
   const sticky = $("sticky-cta");
   const offerCard = $("offer");
   window.addEventListener("scroll", () => {
     const past = window.scrollY > 500;
-    const offerVisible = (() => {
-      const r = offerCard.getBoundingClientRect();
-      return r.top < window.innerHeight && r.bottom > 0;
-    })();
-    sticky.classList.toggle("show", past && !offerVisible);
+    const unlocked = gateZone.classList.contains("unlocked");
+    const r = offerCard.getBoundingClientRect();
+    const offerVisible = r.top < window.innerHeight && r.bottom > 0;
+    sticky.classList.toggle("show", past && unlocked && !offerVisible);
   }, { passive: true });
 
-  // -------- Scroll fade-ins --------
+  // ============================================================
+  // Scroll fade-ins
+  // ============================================================
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); } });
-  }, { threshold: 0.12 });
-  document.querySelectorAll(".fade-in").forEach((el) => io.observe(el));
+  }, { threshold: 0.1 });
+  function watchFade(el) { io.observe(el); }
+  document.querySelectorAll(".fade-in").forEach(watchFade);
   // Safety net: never leave content hidden if the observer misses.
   setTimeout(() => {
     document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => el.classList.add("visible"));

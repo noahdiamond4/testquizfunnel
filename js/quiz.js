@@ -5,17 +5,17 @@
 // ============================================================
 
 (function () {
-  const TOTAL_STEPS = 7; // 0..6
+  const TOTAL_STEPS = 8; // 0..7
   const answers = {
     zip: "",
     concern: "",
     symptoms: [],
     hair: "",
-    homeAge: "",
+    fixtures: "",
+    showers: "",
     household: "",
   };
   let profile = null;
-  let current = 0;
 
   const progressEl = document.getElementById("progress");
   const steps = document.querySelectorAll(".step");
@@ -36,7 +36,6 @@
   }
 
   function goTo(step) {
-    current = step;
     steps.forEach((s) => s.classList.toggle("active", +s.dataset.step === step));
     progressEl.style.width = Math.round((step / (TOTAL_STEPS - 1)) * 100) + "%";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -75,7 +74,7 @@
   });
 
   // -------- Single-select questions auto-advance --------
-  const stepAfter = { concern: 2, hair: 4, homeAge: 5, household: 6 };
+  const stepAfter = { concern: 2, hair: 4, fixtures: 5, showers: 6, household: 7 };
 
   document.querySelectorAll('.options[data-multi="false"]').forEach((group) => {
     const q = group.dataset.q;
@@ -87,7 +86,7 @@
         setTimeout(() => {
           const next = stepAfter[q];
           goTo(next);
-          if (next === 6) runAnalysis();
+          if (next === 7) runAnalysis();
         }, 320);
       });
     });
@@ -116,7 +115,7 @@
   });
   symptomsNext.addEventListener("click", () => goTo(3));
 
-  // -------- Step 6: analysis animation, then redirect --------
+  // -------- Step 7: analysis animation, then redirect --------
   function runAnalysis() {
     track("CompleteRegistration", { content_name: "quiz_completed" });
 

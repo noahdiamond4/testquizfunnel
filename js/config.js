@@ -5,20 +5,37 @@
 const SIFT_CONFIG = {
   brandName: "Sift",
 
-  // Where the final CTA buttons send people. Point this at your
-  // Shopify checkout / product page. Quiz answers are appended as
-  // UTM-style params for attribution.
+  // ---------- Checkout routing ----------
+  // Your Shopify store domain (no protocol, no trailing slash).
+  shopifyDomain: "your-store.myshopify.com",
+
+  // Shopify variant IDs for each finish. When set, CTAs build a
+  // cart permalink: https://{domain}/cart/{variantId}:{qty}
+  // (qty comes from the visitor's "how many showers" answer).
+  // Find variant IDs in Shopify Admin > Products > Variants.
+  variantIds: {
+    black: "",   // e.g. "44519253868725"
+    chrome: "",  // e.g. "44519253901493"
+  },
+
+  // Fallback product URL used when variant IDs are blank.
   checkoutUrl: "https://your-store.com/products/sift-filtered-shower-head",
 
-  // Pricing shown on the report page.
+  // ---------- Lead capture (Google Sheets export) ----------
+  // Deploy google-apps-script/lead-capture.gs as a Web App and
+  // paste its URL here. Every unlocked report POSTs the lead
+  // (name, email, ZIP, score, all quiz answers) to your Sheet.
+  // Leave blank to disable (gate still works, no export).
+  leadWebhookUrl: "",
+
+  // ---------- Offer ----------
   price: "$89",
   compareAtPrice: "$129",
-
-  // Offer framing
   guaranteeDays: 60,
-  freeShippingThreshold: true,
 
-  // Facebook Pixel ID — leave blank to disable. Fires Lead on quiz
-  // completion and InitiateCheckout on CTA click if fbq is present.
+  // ---------- Analytics ----------
+  // Meta Pixel ID — blank disables. Events: PageView, Lead (ZIP),
+  // CompleteRegistration (quiz done), ViewContent (report),
+  // Lead (email unlock), InitiateCheckout (CTA click).
   fbPixelId: "",
 };

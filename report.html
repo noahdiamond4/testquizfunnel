@@ -10,22 +10,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="report-page">
 
   <header class="topbar">
     <a class="logo" href="index.html">Sift<span>.</span></a>
   </header>
 
-  <!-- HERO -->
+  <!-- ============ SECTION 1: HERO ============ -->
   <section class="report-hero">
-    <span class="kicker" id="hero-kicker">Personalized Water Report</span>
-    <h1 id="hero-headline">Your Water Quality Report</h1>
-    <p class="sub" id="hero-sub"></p>
+    <img class="hero-img" src="images/hero.jpg" alt="" onerror="this.remove()" />
+    <div class="hero-inner">
+      <span class="kicker" id="hero-kicker">Official Water Analysis</span>
+      <h1 id="hero-headline">Your Water Quality Report</h1>
+      <p class="sub" id="hero-sub"></p>
+      <div class="scroll-cue">↓ See what we found</div>
+    </div>
   </section>
 
   <main class="report-body">
 
-    <!-- SCORE -->
+    <!-- ============ SECTION 2: SCORE (never gated) ============ -->
     <div class="card score-card fade-in">
       <p class="section-label">Shower Water Score — ZIP <span id="score-zip"></span></p>
       <div class="gauge">
@@ -36,130 +40,233 @@
         <div class="gauge-num" id="gauge-num">0</div>
       </div>
       <div><span class="gauge-grade" id="gauge-grade"></span></div>
-      <p class="score-note" id="score-note"></p>
+      <p class="score-benchmark" id="score-benchmark"></p>
+      <p class="score-note">This isn't a water <em>safety</em> problem — your water is legal to drink. It's a water <em>chemistry</em> problem. And chemistry doesn't care how good your shampoo is.</p>
     </div>
 
-    <!-- METRICS -->
-    <div class="card fade-in">
-      <p class="section-label">What We Found</p>
-      <h2 id="findings-title">Key findings for your area</h2>
+    <!-- ============ SECTION 3: EMAIL GATE ============ -->
+    <div class="gate-zone" id="gate-zone">
 
-      <div class="metric">
-        <div class="metric-top">
-          <span class="metric-name">Water Hardness</span>
-          <span class="metric-val" id="hardness-val"></span>
+      <div class="gate-overlay" id="gate-overlay">
+        <div class="gate-card">
+          <h2>Your full report is ready.</h2>
+          <p id="gate-sub">The complete analysis — what we found, what it's doing to you, and exactly how to fix it — is one step away.</p>
+          <form id="gate-form" novalidate>
+            <input id="gate-name" type="text" autocomplete="given-name" placeholder="First name" aria-label="First name" />
+            <input id="gate-email" type="email" autocomplete="email" placeholder="Email address" aria-label="Email address" required />
+            <p class="gate-error" id="gate-error"></p>
+            <button class="btn btn-primary" type="submit">Unlock My Water Report →</button>
+          </form>
+          <p class="gate-micro">We'll send you a copy so you don't lose it. Unsubscribe anytime.</p>
         </div>
-        <div class="bar-track"><div class="bar-fill" id="hardness-bar"></div></div>
-        <p class="metric-note" id="hardness-note"></p>
       </div>
 
-      <div class="metric">
-        <div class="metric-top">
-          <span class="metric-name">Chlorine / Disinfectant Exposure</span>
-          <span class="metric-val" id="chlorine-val"></span>
+      <div class="gated" id="gated">
+
+        <!-- ============ SECTION 4: WHAT WE FOUND ============ -->
+        <div class="card fade-in">
+          <p class="section-label">Analysis Results</p>
+          <h2 id="findings-title"></h2>
+
+          <div class="finding">
+            <div class="metric-top">
+              <span class="metric-name">Water Hardness</span>
+              <span class="metric-val" id="hardness-val"></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="hardness-bar"></div></div>
+            <p class="metric-note" id="hardness-note"></p>
+          </div>
+
+          <div class="finding">
+            <div class="metric-top">
+              <span class="metric-name">Chlorine Exposure</span>
+              <span class="metric-val" id="chlorine-val"></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="chlorine-bar"></div></div>
+            <p class="metric-note" id="chlorine-note"></p>
+          </div>
+
+          <div class="finding">
+            <div class="metric-top">
+              <span class="metric-name">Also present in your shower water</span>
+            </div>
+            <ul class="flag-list" id="flags"></ul>
+          </div>
+
+          <figure class="report-figure">
+            <img src="images/limescale.jpg" alt="Limescale mineral buildup on a shower head" loading="lazy" onerror="this.parentElement.remove()" />
+            <figcaption>Hard-water mineral scale — the same deposit forming inside your shower head right now.</figcaption>
+          </figure>
+
+          <p class="kicker-line">None of this shows up in a glass of water. All of it shows up in your mirror.</p>
         </div>
-        <div class="bar-track"><div class="bar-fill" id="chlorine-bar"></div></div>
-        <p class="metric-note" id="chlorine-note"></p>
-      </div>
 
-      <div class="metric">
-        <div class="metric-top">
-          <span class="metric-name">Likely Present In Your Shower Water</span>
+        <!-- ============ SECTION 5: THE SCIENCE ============ -->
+        <div class="card fade-in">
+          <p class="section-label">The Part Nobody Tells You</p>
+          <h2>You filter the water you drink. You absorb the water you shower in.</h2>
+
+          <p>Think about the water in your home for a second. The glass you drink passes through your stomach, which was built to handle it. But the shower is a different exposure route entirely — three of them, actually:</p>
+
+          <figure class="report-figure science-figure">
+            <img src="images/absorption.jpg" alt="Illustration of the three ways shower water enters the body: skin, lungs, and hair" loading="lazy" onerror="this.parentElement.remove()" />
+          </figure>
+
+          <div class="science-point">
+            <h3><span class="num">1</span> Your skin — all 20 square feet of it.</h3>
+            <p>Skin is your body's largest organ, and warm water works against it twice: heat opens pores and increases permeability right as the water arrives, and chlorine strips the lipid barrier — the thin layer of natural oils that holds moisture in. That "tight, squeaky" feeling after a shower isn't clean. It's your barrier, rinsed off.</p>
+          </div>
+
+          <div class="science-point">
+            <h3><span class="num">2</span> Your lungs — because hot water turns chlorine into steam.</h3>
+            <p id="science-lungs"></p>
+          </div>
+
+          <div class="science-point">
+            <h3><span class="num">3</span> Your hair — soaked, swollen, and coated.</h3>
+            <p id="science-hair"></p>
+          </div>
+
+          <p class="kicker-line" id="science-kicker"></p>
         </div>
-        <ul class="flag-list" id="flags"></ul>
-      </div>
-    </div>
 
-    <!-- PERSONALIZED ANALYSIS -->
-    <div class="card fade-in">
-      <p class="section-label">Your Answers, Explained</p>
-      <h2 id="personal-title"></h2>
-      <div id="personal-body"></div>
-    </div>
+        <!-- ============ SECTION 6: YOUR ANSWERS, DECODED ============ -->
+        <div class="card fade-in">
+          <p class="section-label">Why You're Feeling It</p>
+          <h2>You already gave us the evidence. You just didn't know it was evidence.</h2>
+          <div id="personal-body"></div>
+        </div>
 
-    <!-- THE NARRATIVE / ADVERTORIAL -->
-    <div class="card fade-in">
-      <p class="section-label">Why Products Haven't Fixed It</p>
-      <h2>You can't out-condition your water.</h2>
-      <p id="narrative-1"></p>
-      <p id="narrative-2"></p>
-      <p><strong>The fix isn't another product — it's filtering the water itself,</strong> at the one place your body meets it most: the shower head.</p>
-    </div>
+        <!-- ============ SECTION 7: COST OF DOING NOTHING ============ -->
+        <div class="card fade-in">
+          <p class="section-label">The Part Nobody Calculates</p>
+          <h2>You're not saving money by waiting. You're spending it invisibly.</h2>
+          <p id="cost-intro"></p>
+          <div class="big-math">
+            <div class="math-row"><span>What you spend on products per year</span><strong id="math-spend">~$540</strong></div>
+            <div class="math-row"><span>How much of it your water undoes</span><strong>most of it</strong></div>
+            <div class="math-row highlight"><span>What it costs to fix the water itself</span><strong><span id="math-price"></span>. Once.</strong></div>
+          </div>
+          <p class="kicker-line">The most expensive thing in your shower isn't on the shelf. It's coming out of the wall.</p>
+        </div>
 
-    <!-- PRODUCT OFFER -->
-    <div class="card fade-in" id="offer">
-      <p class="section-label">The Recommendation For Your Water</p>
-      <div class="product-visual">
-        <div class="shower-icon">🚿</div>
-        <h3>The Sift Filtered Shower Head</h3>
-        <p class="tagline" id="product-tagline"></p>
-      </div>
+        <!-- ============ SECTION 8: THE TURN ============ -->
+        <div class="card fade-in">
+          <p class="section-label">The Fix Isn't Another Product</p>
+          <h2>You can't out-condition your water. You can only filter it.</h2>
+          <p id="turn-1"></p>
+          <p id="turn-2"></p>
+        </div>
 
-      <ul class="benefit-list" id="benefits"></ul>
+        <!-- ============ SECTION 9: THE PRODUCT ============ -->
+        <div class="card fade-in" id="offer">
+          <p class="section-label">Built For Water Like Yours</p>
+          <h2 id="product-headline"></h2>
+          <p id="product-intro">Based on your water profile and your answers, here's your setup:</p>
 
-      <div class="price-row">
-        <span class="price-now" id="price-now"></span>
-        <span class="price-was" id="price-was"></span>
-        <span class="price-badge" id="price-badge"></span>
-      </div>
-      <p class="offer-note">Free shipping · Tool-free install in under 2 minutes · Fits standard US shower arms</p>
+          <figure class="product-figure">
+            <img id="product-img" src="images/product-black.jpg" alt="The Sift filtered shower head" loading="lazy" onerror="this.parentElement.classList.add('img-missing')" />
+          </figure>
 
-      <a class="btn btn-primary" id="cta-main" href="#">Get My Sift Shower Head →</a>
+          <ul class="benefit-list" id="benefits"></ul>
 
-      <div class="guarantee">
-        <span class="shield">🛡️</span>
-        <div><strong id="guarantee-title"></strong><br />
-        Shower with Sift. If your hair and skin don't feel the difference, send it back for a full refund — we'll even cover return shipping.</div>
-      </div>
-    </div>
+          <div class="finish-row" id="finish-row"></div>
 
-    <!-- TESTIMONIALS -->
-    <div class="card fade-in">
-      <p class="section-label">From People With Water Like Yours</p>
-      <h2 id="testimonial-title">What changed for them</h2>
-      <div id="testimonials"></div>
-    </div>
+          <div class="price-row">
+            <span class="price-was" id="price-was"></span>
+            <span class="price-now" id="price-now"></span>
+            <span class="price-badge" id="price-badge"></span>
+          </div>
+          <p class="offer-note" id="offer-note">Free shipping · 2-minute tool-free install · Fits standard US shower arms</p>
 
-    <!-- COMPARISON -->
-    <div class="card fade-in">
-      <p class="section-label">Compare Your Options</p>
-      <h2>Ways to deal with your water</h2>
-      <table class="compare">
-        <thead>
-          <tr><th></th><th class="sift-col">Sift</th><th>Whole-home softener</th><th>Do nothing</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Upfront cost</td><td class="sift-col" id="compare-price"></td><td>$2,000–$6,000</td><td>$0</td></tr>
-          <tr><td>Filters chlorine at the shower</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
-          <tr><td>Reduces hard-water minerals &amp; sediment</td><td class="sift-col yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-          <tr><td>Install time</td><td class="sift-col">2 min</td><td>1–2 days</td><td>—</td></tr>
-          <tr><td>Works in apartments / rentals</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="yes">✓</td></tr>
-        </tbody>
-      </table>
-    </div>
+          <a class="btn btn-primary btn-lg" id="cta-main" href="#">Get My Sift →</a>
+          <p class="cta-micro" id="cta-micro"></p>
 
-    <!-- FAQ -->
-    <div class="card fade-in">
-      <p class="section-label">Common Questions</p>
-      <h2>Before you decide</h2>
-      <details class="faq-item">
-        <summary>Will it lower my water pressure?</summary>
-        <p>No — Sift's multi-stage filter is designed for full flow. Most customers report pressure feels the same or better thanks to the engineered spray plate.</p>
-      </details>
-      <details class="faq-item">
-        <summary>How long does the filter last?</summary>
-        <p id="faq-filter-life"></p>
-      </details>
-      <details class="faq-item">
-        <summary>Is it hard to install?</summary>
-        <p>If you can unscrew a bottle cap, you can install Sift. It threads onto any standard US shower arm by hand — no tools, no plumber.</p>
-      </details>
-      <details class="faq-item">
-        <summary>What if it doesn't work for me?</summary>
-        <p id="faq-guarantee"></p>
-      </details>
-      <a class="btn btn-primary" id="cta-faq" href="#" style="margin-top:20px;">Try Sift Risk-Free →</a>
-    </div>
+          <div class="guarantee">
+            <span class="shield">🛡️</span>
+            <div><strong id="guarantee-title"></strong><br />
+            Shower with Sift. If your hair and skin don't feel the difference, send it back for a full refund — we'll even cover return shipping.</div>
+          </div>
+        </div>
+
+        <!-- ============ SECTION 10: PROOF ============ -->
+        <div class="card fade-in">
+          <p class="section-label">See What It Caught</p>
+          <h2 id="proof-headline"></h2>
+          <p>Words can claim anything. Filters can't. This is a Sift cartridge after three months in hard water — every bit of that discoloration is mineral scale and sediment that would otherwise have ended up on your hair, your skin, and your color.</p>
+          <figure class="report-figure">
+            <img src="images/filter-compare.jpg" alt="A new white filter cartridge next to a discolored cartridge after 90 days of use" loading="lazy" onerror="this.parentElement.remove()" />
+            <figcaption>New cartridge (left) · 90 days in hard water (right)</figcaption>
+          </figure>
+        </div>
+
+        <!-- ============ SECTION 11: TESTIMONIALS ============ -->
+        <div class="card fade-in">
+          <p class="section-label">From Hard-Water Households</p>
+          <h2 id="testimonial-title"></h2>
+          <div id="testimonials"></div>
+        </div>
+
+        <!-- ============ SECTION 12: COMPARISON ============ -->
+        <div class="card fade-in">
+          <p class="section-label">Compare Your Options</p>
+          <h2 id="compare-headline"></h2>
+          <div class="table-scroll">
+            <table class="compare">
+              <thead>
+                <tr><th></th><th class="sift-col">Sift</th><th>Whole-home softener</th><th>Keep showering in it</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Upfront cost</td><td class="sift-col" id="compare-price"></td><td>$2,000–$6,000</td><td>$0 today</td></tr>
+                <tr><td>Filters chlorine at the shower</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+                <tr><td>Reduces minerals &amp; sediment</td><td class="sift-col yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+                <tr><td>Install</td><td class="sift-col">2 min, no tools</td><td>1–2 days, plumber</td><td>—</td></tr>
+                <tr><td>Works in rentals</td><td class="sift-col yes">✓</td><td class="no">✗</td><td class="yes">✓</td></tr>
+                <tr><td>Annual cost of inaction</td><td class="sift-col">—</td><td>—</td><td class="bad-cell">~$540 in neutralized products</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ SECTION 13: GUARANTEE ============ -->
+        <div class="card fade-in">
+          <p class="section-label">The Guarantee</p>
+          <h2 id="guarantee-headline"></h2>
+          <p id="guarantee-body"></p>
+          <p>You've spent more than <span id="guarantee-price"></span> on a single salon visit fixing what the water did. This one ends the cycle — or it's free.</p>
+          <a class="btn btn-primary btn-lg" id="cta-guarantee" href="#">Try Sift Risk-Free →</a>
+        </div>
+
+        <!-- ============ SECTION 14: FAQ ============ -->
+        <div class="card fade-in">
+          <p class="section-label">Common Questions</p>
+          <h2>Before you decide.</h2>
+          <details class="faq-item">
+            <summary>Will it lower my water pressure?</summary>
+            <p>No — most customers report equal or better pressure from the engineered spray plate.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How long does a filter last?</summary>
+            <p id="faq-filter-life"></p>
+          </details>
+          <details class="faq-item">
+            <summary>Is it hard to install?</summary>
+            <p>If you can unscrew a bottle cap, you're qualified. Standard US shower arms, no tools, no plumber.</p>
+          </details>
+          <details class="faq-item">
+            <summary>I rent — can I take it with me?</summary>
+            <p>Yes. Unscrews in seconds; your old head goes back on, and your landlord never knows.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What if it doesn't work for me?</summary>
+            <p id="faq-guarantee"></p>
+          </details>
+          <a class="btn btn-primary btn-lg" id="cta-faq" href="#">Fix My Water →</a>
+          <p class="cta-micro" id="faq-micro"></p>
+        </div>
+
+      </div><!-- /gated -->
+    </div><!-- /gate-zone -->
 
   </main>
 
@@ -175,7 +282,7 @@
   <!-- STICKY CTA -->
   <div class="sticky-cta" id="sticky-cta">
     <div class="sc-text">
-      <div class="sc-title" id="sticky-title">Your water scored low.</div>
+      <div class="sc-title" id="sticky-title"></div>
       <div class="sc-sub" id="sticky-sub"></div>
     </div>
     <a class="btn btn-primary" id="cta-sticky" href="#">Get Sift</a>
