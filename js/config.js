@@ -6,20 +6,21 @@ const SIFT_CONFIG = {
   brandName: "Sift",
 
   // ---------- Checkout routing ----------
-  // Your Shopify store domain (no protocol, no trailing slash).
-  shopifyDomain: "your-store.myshopify.com",
+  // Primary store domain (no protocol, no trailing slash). Using the
+  // public domain keeps checkout on choosesift.com so Meta's
+  // first-party cookies survive the handoff (better attribution).
+  shopifyDomain: "choosesift.com",
 
-  // Shopify variant IDs for each finish. When set, CTAs build a
-  // cart permalink: https://{domain}/cart/{variantId}:{qty}
-  // (qty comes from the visitor's "how many showers" answer).
-  // Find variant IDs in Shopify Admin > Products > Variants.
+  // Shopify variant IDs for each finish. CTAs build a cart permalink:
+  // https://{domain}/cart/{variantId}:{qty}  (qty from the "how many
+  // showers" answer). "chrome" routes the Silver product.
   variantIds: {
-    black: "",   // e.g. "44519253868725"
-    chrome: "",  // e.g. "44519253901493"
+    black: "42651147567200",   // Sift Filtered Showerhead - Black
+    chrome: "42871694950496",  // Sift Filtered Showerhead - Silver
   },
 
   // Fallback product URL used when variant IDs are blank.
-  checkoutUrl: "https://your-store.com/products/sift-filtered-shower-head",
+  checkoutUrl: "https://choosesift.com/products/sift-filtered-showerhead",
 
   // ---------- Lead capture (Google Sheets export) ----------
   // Deploy google-apps-script/lead-capture.gs as a Web App and
@@ -29,13 +30,16 @@ const SIFT_CONFIG = {
   leadWebhookUrl: "",
 
   // ---------- Offer ----------
-  price: "$89",
+  // Matches the live Shopify price exactly so the page and checkout
+  // never disagree. compareAtPrice drives the strikethrough + "Save %"
+  // — see note in chat: set a real compare-at in Shopify to back it up.
+  price: "$89.99",
   compareAtPrice: "$129",
   guaranteeDays: 60,
 
   // ---------- Analytics ----------
-  // Meta Pixel ID — blank disables. Events: PageView, Lead (ZIP),
-  // CompleteRegistration (quiz done), ViewContent (report),
-  // Lead (email unlock), InitiateCheckout (CTA click).
-  fbPixelId: "",
+  // Meta Pixel. Events: PageView, Lead (ZIP), CompleteRegistration
+  // (quiz done), ViewContent (report), Lead (email unlock),
+  // InitiateCheckout (CTA click).
+  fbPixelId: "1526275735945115",
 };
