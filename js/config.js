@@ -23,11 +23,9 @@ const SIFT_CONFIG = {
   checkoutUrl: "https://choosesift.com/products/sift-filtered-showerhead",
 
   // ---------- Lead capture (Google Sheets export) ----------
-  // Deploy google-apps-script/lead-capture.gs as a Web App and
-  // paste its URL here. Every unlocked report POSTs the lead
-  // (name, email, ZIP, score, all quiz answers) to your Sheet.
-  // Leave blank to disable (gate still works, no export).
-  leadWebhookUrl: "",
+  // Deployed Apps Script web app. Every report unlock + every funnel
+  // event POSTs here and is appended to the Google Sheet.
+  leadWebhookUrl: "https://script.google.com/macros/s/AKfycbwJq0Xqhxv-Py_gQBr8Q_lNoerrQ5U4I9e8-GLXDbvGALeaF7ufHEV9ZLft-wW-t62x/exec",
 
   // ---------- Offer ----------
   // Matches the live Shopify price exactly so the page and checkout

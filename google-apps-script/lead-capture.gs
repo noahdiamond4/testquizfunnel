@@ -101,14 +101,28 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  // Health check without key.
+  var cb = e && e.parameter && e.parameter.callback;
+
+  // Reply as JSONP (when ?callback= is present) or plain JSON.
+  // JSONP is what lets dashboard.html read this cross-origin, since
+  // Apps Script web apps don't send CORS headers.
+  function reply(obj) {
+    var body = JSON.stringify(obj);
+    if (cb) {
+      return ContentService.createTextOutput(cb + "(" + body + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(body)
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (!e || !e.parameter || !e.parameter.key) {
+    if (cb) return reply({ ok: false, error: "missing key" });
     return ContentService.createTextOutput("Sift funnel backend is live.")
       .setMimeType(ContentService.MimeType.TEXT);
   }
   if (e.parameter.key !== DASHBOARD_KEY) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "bad key" }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return reply({ ok: false, error: "bad key" });
   }
 
   var limit = Math.min(parseInt(e.parameter.limit || "2000", 10) || 2000, 5000);
@@ -122,12 +136,10 @@ function doGet(e) {
     return sheet.getRange(start, 1, last - start + 1, sheet.getLastColumn()).getValues();
   }
 
-  var out = {
+  return reply({
     ok: true,
     now: new Date().toISOString(),
     events: tail(EVENTS_SHEET, limit),
     leads: tail(LEADS_SHEET, 200),
-  };
-  return ContentService.createTextOutput(JSON.stringify(out))
-    .setMimeType(ContentService.MimeType.JSON);
+  });
 }
