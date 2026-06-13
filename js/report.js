@@ -29,6 +29,12 @@
   }
   function track(event, data) { if (window.fbq) fbq("track", event, data || {}); }
 
+  // -------- Reveal system (animations fire on unlock, not behind blur) --------
+  let revealed = false;
+  const revealQueue = [];
+  function onReveal(fn) { if (revealed) fn(); else revealQueue.push(fn); }
+  function reveal() { if (revealed) return; revealed = true; revealQueue.forEach((f) => { try { f(); } catch (e) {} }); }
+
   // -------- Funnel events --------
   let unlockedFlag = false, offerSeen = false, checkoutClicked = false;
   SiftTrack.send("report_view", { zip: p.zip, detail: "score " + p.score });
@@ -55,23 +61,27 @@
   const percentile = Math.max(2, Math.min(96, Math.round((p.score / 94) * 100)));
 
   // -------- Checkout routing: color variant + quantity --------
-  const finish = a.fixtures === "chrome" ? "chrome" : "black"; // mixed/unsure -> black (premium default)
-  const finishLabel = finish === "chrome" ? "Chrome" : "Gloss Black";
-  const qty = Math.max(1, Math.min(3, parseInt(a.showers || "1", 10)));
+  // Funnel-recommended defaults (used to pre-select the offer config).
+  const recFinish = a.fixtures === "chrome" ? "chrome" : "black"; // mixed/unsure -> black
+  const recQty = Math.max(1, Math.min(6, parseInt(a.showers || "1", 10)));
+  function finishLabelOf(f) { return f === "chrome" ? "Chrome" : "Gloss Black"; }
 
-  function buildCheckoutUrl() {
+  // Live selection (visitor can change it on the offer card).
+  let selFinish = recFinish;
+  let selQty = recQty;
+
+  function buildCheckoutUrl(f, q) {
     const params = new URLSearchParams({
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
-      zip: p.zip, score: p.score, concern: a.concern || "", finish, qty,
+      zip: p.zip, score: p.score, concern: a.concern || "", finish: f, qty: q,
     });
-    const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[finish];
+    const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
     if (variantId) {
-      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + qty + "?" + params.toString();
+      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + q + "?" + params.toString();
     }
     const base = SIFT_CONFIG.checkoutUrl;
     return base + (base.includes("?") ? "&" : "?") + params.toString();
   }
-  const checkoutHref = buildCheckoutUrl();
 
   // ============================================================
   // SECTION 1 — HERO
@@ -136,6 +146,7 @@
       stepUp();
     }, 350);
   }
+  onReveal(animateGauge);
 
   // ============================================================
   // SECTION 3 — EMAIL GATE
@@ -146,7 +157,7 @@
   function unlock(skipAnimation) {
     unlockedFlag = true;
     gateZone.classList.add("unlocked");
-    animateGauge();
+    reveal();
     if (!skipAnimation) {
       track("Lead", { content_name: "report_unlocked" });
       SiftTrack.send("gate_unlock", { zip: p.zip });
@@ -180,7 +191,7 @@
       hardnessPpm: p.hardnessPpm, hardnessLabel: p.hardnessLabel,
       chlorine: p.chlorineLabel,
       concern: a.concern, symptoms: (a.symptoms || []).join("|"),
-      hair: a.hair, fixtures: a.fixtures, finish, showers: a.showers, household: a.household,
+      hair: a.hair, fixtures: a.fixtures, finish: selFinish, showers: a.showers, household: a.household,
       page: location.href, ts: new Date().toISOString(),
     };
     localStorage.setItem("sift_lead", JSON.stringify({ email, ts: Date.now() }));
@@ -261,6 +272,140 @@
     "A 10-minute shower runs ~20 gallons over you. You drink about half a gallon a day. You're filtering the half gallon — and standing in the twenty.";
 
   // ============================================================
+  // SECTION 4b — WATER PROFILE RADAR (driven by their answers)
+  // ============================================================
+  (function buildRadar() {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = $("radar");
+    const cx = 160, cy = 150, R = 98;
+
+    const symCount = sym.has("none") ? 0 : (a.symptoms || []).filter((s) => s !== "none").length;
+    const hh2 = parseInt(a.household || "1", 10);
+    const sh2 = recQty;
+
+    // Each axis 0-100 where higher = worse for hair/skin.
+    const axes = [
+      { label: "Hardness", val: Math.min(100, Math.round(p.hardnessPpm / 3.3)) },
+      { label: "Chlorine", val: Math.min(100, p.chlorineLevel * 30 + 5) },
+      { label: "Sediment", val: Math.min(100, p.agingPipes * 28 + 6) },
+      { label: "Symptoms", val: symCount ? Math.min(95, symCount * 22 + 18) : 12 },
+      { label: "Exposure", val: Math.min(98, sh2 * 13 + hh2 * 8 + 8) },
+    ];
+    const ideal = [14, 16, 12, 10, 15];
+    const N = axes.length;
+    const angle = (i) => (Math.PI * 2 * i) / N - Math.PI / 2;
+    const pt = (i, r) => [cx + Math.cos(angle(i)) * r, cy + Math.sin(angle(i)) * r];
+
+    function poly(vals, scale) {
+      return vals.map((v, i) => pt(i, R * (v / 100) * scale).join(",")).join(" ");
+    }
+    function mk(tag, attrs) {
+      const el = document.createElementNS(NS, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+
+    // grid rings
+    [0.25, 0.5, 0.75, 1].forEach((f) => {
+      svg.appendChild(mk("polygon", {
+        points: axes.map((_, i) => pt(i, R * f).join(",")).join(" "),
+        fill: "none", stroke: "rgba(11,39,51,.10)", "stroke-width": 1,
+      }));
+    });
+    // spokes + labels
+    axes.forEach((ax, i) => {
+      const [x, y] = pt(i, R);
+      svg.appendChild(mk("line", { x1: cx, y1: cy, x2: x, y2: y, stroke: "rgba(11,39,51,.10)", "stroke-width": 1 }));
+      const [lx, ly] = pt(i, R + 20);
+      const t = mk("text", {
+        x: lx, y: ly, "text-anchor": Math.abs(lx - cx) < 6 ? "middle" : lx < cx ? "end" : "start",
+        "dominant-baseline": "middle", "font-size": "11", "font-weight": "700", fill: "#41606c",
+      });
+      t.textContent = ax.label;
+      svg.appendChild(t);
+      const v = mk("text", {
+        x: lx, y: ly + 13, "text-anchor": Math.abs(lx - cx) < 6 ? "middle" : lx < cx ? "end" : "start",
+        "dominant-baseline": "middle", "font-size": "10", "font-weight": "800",
+        fill: ax.val >= 60 ? "#d9534f" : ax.val >= 35 ? "#b07d10" : "#1e9e6a",
+      });
+      v.textContent = ax.val + "/100";
+      svg.appendChild(v);
+    });
+    // ideal polygon (static, small green)
+    svg.appendChild(mk("polygon", {
+      points: poly(ideal, 1), fill: "rgba(30,158,106,.10)",
+      stroke: "rgba(30,158,106,.55)", "stroke-width": 1.5,
+    }));
+    // your polygon — animated grow via transform scale
+    const you = mk("polygon", {
+      points: poly(axes.map((x) => x.val), 1),
+      fill: "rgba(232,81,47,.22)", stroke: "#e8512f", "stroke-width": 2.5,
+      "stroke-linejoin": "round",
+      style: "transform-origin:" + cx + "px " + cy + "px; transform:scale(0); transition:transform 1.1s cubic-bezier(.2,.8,.3,1);",
+    });
+    svg.appendChild(you);
+    // vertices
+    axes.forEach((ax, i) => {
+      const [x, y] = pt(i, R * (ax.val / 100));
+      svg.appendChild(mk("circle", { cx: x, cy: y, r: 3.5, fill: "#e8512f",
+        style: "transform-origin:" + cx + "px " + cy + "px; transform:scale(0); transition:transform .8s ease " + (0.4 + i * 0.08) + "s;" }));
+    });
+
+    const worst = axes.slice().sort((m, n) => n.val - m.val)[0];
+    $("radar-intro").textContent =
+      "We scored five things that decide what your water does to your hair and skin. Yours spikes hardest on " +
+      worst.label.toLowerCase() + " — the bigger the red shape, the harder your water is working against you. The small green shape is what filtered water looks like.";
+
+    onReveal(() => {
+      svg.querySelectorAll('[style*="scale(0)"]').forEach((el) => {
+        el.style.transform = "scale(1)";
+      });
+    });
+  })();
+
+  // ============================================================
+  // SECTION 5b — CHLORINE EXPOSURE COUNTER (something crazy)
+  // ============================================================
+  (function buildChlorine() {
+    const hh3 = parseInt(a.household || "1", 10);
+    const gallonsYr = hh3 * 20 * 365;            // ~20 gal per 10-min shower
+    const poolGal = 18000;                        // avg backyard pool
+    const pools10yr = (gallonsYr * 10) / poolGal; // over the next decade
+
+    $("chlorine-headline").textContent =
+      (hh3 > 1 ? "Your household will shower in " : "You'll shower in ") +
+      gallonsYr.toLocaleString() + " gallons of chlorinated water this year.";
+
+    const poolsRounded = Math.max(1, Math.round(pools10yr));
+    $("chlorine-punch").innerHTML =
+      "Over the next 10 years that's <strong>roughly " + poolsRounded +
+      " backyard swimming pools</strong> of chlorinated water running over " +
+      (hh3 > 1 ? "your family's" : "your") + " skin and hair — none of it filtered. " +
+      "Sift takes the chlorine out before it ever reaches you.";
+
+    // pool icons
+    const icons = Math.min(12, poolsRounded);
+    $("pool-row").innerHTML = "<span class='pool-cap'>10-year exposure:</span> " +
+      Array.from({ length: icons }, () => "🏊").join("") +
+      (poolsRounded > icons ? " <span class='pool-more'>+" + (poolsRounded - icons) + " more</span>" : "");
+
+    onReveal(() => {
+      // count up the big number
+      const el = $("chlorine-gallons");
+      const dur = 1400, t0 = performance.now();
+      function step(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = Math.round(gallonsYr * eased).toLocaleString();
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+      // fill the meter
+      setTimeout(() => { $("chlorine-fill").style.height = "100%"; }, 100);
+    });
+  })();
+
+  // ============================================================
   // SECTION 6 — YOUR ANSWERS, DECODED
   // ============================================================
   const bits = [];
@@ -297,7 +442,7 @@
                : "You pour ~" + gallonsYear + " gallons of this over yourself per year."),
     p: "Roughly " + tubs.toLocaleString() + " bathtubs of " + p.hardnessLabel.toLowerCase() + ", " +
        (chlorBad ? "heavily chlorinated" : "chlorinated") + " water across hair and skin annually — through " +
-       (qty > 1 ? qty + " shower heads, all unfiltered." : "one shower head."),
+       (recQty > 1 ? recQty + " shower heads, all unfiltered." : "one shower head."),
   });
 
   const pb = $("personal-body");
@@ -338,8 +483,7 @@
   // SECTION 9 — THE PRODUCT
   // ============================================================
   $("product-headline").textContent = "Sift. Configured for ZIP " + p.zip + ".";
-  $("product-img").src = finish === "chrome" ? "images/product-chrome.jpg" : "images/product-black.jpg";
-  $("product-img").alt = "The Sift filtered shower head in " + finishLabel;
+  // (product image, price, labels, and CTA hrefs are all set by updateOffer())
 
   const benefits = [];
   benefits.push("<strong>15-stage filtration with KDF-55 + calcium sulfite</strong> — the media combination for " + (hardBad ? "very hard, high-chlorine water like " + p.areaName + "'s" : "chlorinated water like " + p.areaName + "'s"));
@@ -350,20 +494,55 @@
   benefits.push("<strong>Spa-grade pressure</strong> — filtration without the trickle");
   $("benefits").innerHTML = benefits.slice(0, 5).map((b) => "<li>" + b + "</li>").join("");
 
-  $("finish-row").innerHTML =
-    (a.fixtures === "mixed"
-      ? "<span class='finish-note'>Most-loved finish:</span> <strong>Your Sift: " + finishLabel + "</strong> <span class='finish-alt'>· " + (finish === "chrome" ? "Gloss Black" : "Chrome") + " available</span>"
-      : "<span class='finish-note'>You told us your fixtures are " + (finish === "chrome" ? "silver/chrome" : "black") + ".</span> <strong>Your Sift: " + finishLabel + "</strong> <span class='finish-alt'>· " + (finish === "chrome" ? "Gloss Black" : "Chrome") + " also available</span>");
+  // ---- Interactive offer config (finish + quantity) ----
+  const UNIT = parseFloat(SIFT_CONFIG.price.replace(/[^0-9.]/g, ""));
+  const CMP = parseFloat(SIFT_CONFIG.compareAtPrice.replace(/[^0-9.]/g, ""));
+  const savePct = CMP > UNIT ? Math.round((1 - UNIT / CMP) * 100) : 0;
+  const money = (n) => "$" + n.toFixed(2);
+  const QTY_MAX = 6;
 
-  $("price-was").textContent = SIFT_CONFIG.compareAtPrice;
-  $("price-now").textContent = SIFT_CONFIG.price;
-  const pct = Math.round((1 - parseFloat(SIFT_CONFIG.price.replace(/[^0-9.]/g, "")) / parseFloat(SIFT_CONFIG.compareAtPrice.replace(/[^0-9.]/g, ""))) * 100);
-  $("price-badge").textContent = "Save " + pct + "%";
+  $("reco-note").textContent =
+    "Pre-filled from your quiz: " + finishLabelOf(recFinish) +
+    (a.fixtures === "mixed" ? " (our most-loved finish)" : " to match your fixtures") +
+    " · " + recQty + " unit" + (recQty > 1 ? "s for your " + recQty + " showers" : "") +
+    ". Change anything you like.";
 
-  $("cta-main").textContent = "Get My Sift — " + finishLabel + " →";
-  $("cta-micro").textContent =
-    (qty > 1 ? "Quantity set to " + qty + " — one for each shower you told us about (adjustable at checkout). " : "") +
-    "Your report and configuration are saved for 24 hours.";
+  const ctaIds = ["cta-main", "cta-guarantee", "cta-faq", "cta-sticky"];
+
+  function updateOffer() {
+    const label = finishLabelOf(selFinish);
+    // finish toggle active state
+    document.querySelectorAll("#color-toggle button").forEach((b) =>
+      b.classList.toggle("active", b.dataset.finish === selFinish));
+    // quantity
+    $("qty-val").textContent = selQty;
+    $("qty-minus").disabled = selQty <= 1;
+    $("qty-plus").disabled = selQty >= QTY_MAX;
+    // product image
+    $("product-img").src = selFinish === "chrome" ? "images/product-chrome.jpg" : "images/product-black.jpg";
+    $("product-img").alt = "The Sift filtered shower head in " + label;
+    // pricing (scales with quantity)
+    $("price-now").textContent = money(UNIT * selQty);
+    $("price-was").textContent = CMP ? money(CMP * selQty) : "";
+    $("price-badge").textContent = savePct ? "Save " + savePct + "%" : "";
+    $("price-each").textContent = selQty > 1 ? selQty + " × " + money(UNIT) + " each · free shipping" : "";
+    // ctas
+    const href = buildCheckoutUrl(selFinish, selQty);
+    ctaIds.forEach((id) => { $(id).href = href; });
+    $("cta-main").textContent = "Get My Sift — " + label + (selQty > 1 ? " ×" + selQty : "") + " →";
+  }
+
+  document.querySelectorAll("#color-toggle button").forEach((b) => {
+    b.addEventListener("click", () => {
+      selFinish = b.dataset.finish;
+      updateOffer();
+      SiftTrack.send("offer_config", { zip: p.zip, detail: "finish=" + selFinish });
+    });
+  });
+  $("qty-minus").addEventListener("click", () => { if (selQty > 1) { selQty--; updateOffer(); } });
+  $("qty-plus").addEventListener("click", () => { if (selQty < QTY_MAX) { selQty++; updateOffer(); } });
+
+  $("cta-micro").textContent = "Your report and configuration are saved for 24 hours.";
 
   $("guarantee-title").textContent = SIFT_CONFIG.guaranteeDays + "-Day \"Feel the Difference\" Guarantee";
 
@@ -415,15 +594,16 @@
   // ============================================================
   // CTAs + STICKY
   // ============================================================
-  ["cta-main", "cta-guarantee", "cta-faq", "cta-sticky"].forEach((id) => {
-    const el = $(id);
-    el.href = checkoutHref;
-    el.addEventListener("click", () => {
+  ctaIds.forEach((id) => {
+    $(id).addEventListener("click", () => {
       checkoutClicked = true;
-      track("InitiateCheckout", { content_name: "sift_shower_head", finish, qty });
-      SiftTrack.send("checkout_click", { zip: p.zip, detail: finish + " x" + qty + " via " + id });
+      track("InitiateCheckout", { content_name: "sift_shower_head", finish: selFinish, qty: selQty });
+      SiftTrack.send("checkout_click", { zip: p.zip, detail: selFinish + " x" + selQty + " via " + id });
     });
   });
+
+  // Initial paint of the offer config (sets hrefs, price, image, labels).
+  updateOffer();
 
   // Offer visibility — lets the dashboard distinguish "left before
   // seeing the price" from "saw the price and left".

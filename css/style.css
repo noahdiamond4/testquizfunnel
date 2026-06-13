@@ -167,6 +167,16 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 4px 16px rgba(14,124,140,.15);
 }
 .option .emoji { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+
+/* Number-tile grid (shower count 1–6) */
+.options--grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.opt-num {
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1.7rem; font-weight: 700;
+  padding: 22px 0;
+}
+.opt-num.selected { color: var(--aqua-deep); }
 .option .check {
   margin-left: auto; flex-shrink: 0;
   width: 24px; height: 24px; border-radius: 50%;
@@ -461,6 +471,84 @@ img { max-width: 100%; display: block; }
   display: flex; align-items: center; justify-content: center;
 }
 .science-point p { font-size: .97rem; }
+
+/* ---------- Water profile radar ---------- */
+.radar-wrap { display: flex; justify-content: center; margin: 8px 0 4px; }
+.radar-wrap svg { width: 100%; max-width: 360px; height: auto; overflow: visible; }
+.radar-legend {
+  display: flex; justify-content: center; gap: 22px;
+  font-size: .82rem; color: var(--ink-soft); margin-top: 8px;
+}
+.radar-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.radar-legend .dot-you { background: #e8512f; }
+.radar-legend .dot-ideal { background: rgba(30,158,106,.55); }
+
+/* ---------- Chlorine exposure card ---------- */
+.chlorine-card { position: relative; overflow: hidden; }
+.chlorine-meter {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0e3d4a, #0b2733);
+  color: #fff;
+  padding: 28px 24px;
+  margin: 18px 0;
+  overflow: hidden;
+  min-height: 150px;
+  display: flex; align-items: center;
+}
+.chlorine-fill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+  background: linear-gradient(180deg, rgba(45,212,191,.30), rgba(14,124,140,.55));
+  transition: height 1.5s cubic-bezier(.3,.7,.3,1);
+  z-index: 0;
+}
+.chlorine-num { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 4px; }
+.cl-big { font-family: var(--font-head); font-size: 3.2rem; font-weight: 700; line-height: 1; color: #fff; }
+.cl-unit { font-size: .95rem; color: rgba(255,255,255,.82); }
+.pool-row { font-size: 1.15rem; line-height: 1.7; margin-bottom: 10px; }
+.pool-row .pool-cap { font-size: .82rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+.pool-row .pool-more { font-size: .85rem; color: var(--ink-soft); font-weight: 700; }
+.chlorine-punch { font-size: 1rem; color: var(--ink-soft) !important; }
+.chlorine-punch strong { color: var(--ink); }
+
+/* ---------- Interactive offer config ---------- */
+.reco-line {
+  display: inline-block;
+  background: linear-gradient(135deg, #fff3da, #fde8cf);
+  color: #8a5a00;
+  font-weight: 700; font-size: .9rem;
+  padding: 8px 14px; border-radius: 999px;
+  margin-bottom: 18px;
+}
+.offer-config { display: flex; flex-direction: column; gap: 18px; margin-bottom: 12px; }
+.config-block { display: flex; flex-direction: column; gap: 10px; }
+.config-label { font-size: .82rem; font-weight: 800; letter-spacing: .04em; color: var(--ink-soft); text-transform: uppercase; }
+.color-toggle { display: flex; gap: 10px; }
+.color-toggle button {
+  flex: 1;
+  font-family: var(--font-body); font-size: .98rem; font-weight: 700;
+  padding: 14px; border-radius: 12px; cursor: pointer;
+  background: var(--white); color: var(--ink);
+  border: 2px solid rgba(11,39,51,.12);
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.color-toggle button:hover { border-color: rgba(14,124,140,.4); }
+.color-toggle button.active {
+  border-color: var(--aqua); background: var(--aqua-pale);
+  box-shadow: 0 4px 16px rgba(14,124,140,.15);
+}
+.qty-stepper { display: inline-flex; align-items: center; gap: 0; align-self: flex-start; border: 2px solid rgba(11,39,51,.12); border-radius: 12px; overflow: hidden; }
+.qty-stepper button {
+  width: 52px; height: 52px;
+  font-size: 1.5rem; font-weight: 700; line-height: 1;
+  background: var(--white); color: var(--aqua-deep); border: none; cursor: pointer;
+  transition: background .15s;
+}
+.qty-stepper button:hover:not([disabled]) { background: var(--aqua-pale); }
+.qty-stepper button[disabled] { color: rgba(11,39,51,.2); cursor: not-allowed; }
+.qty-stepper #qty-val { min-width: 56px; text-align: center; font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; }
+.reco-note { font-size: .85rem; color: var(--ink-soft) !important; margin: 0 0 20px !important; }
+.price-each { text-align: center; font-size: .9rem; color: var(--ink-soft) !important; margin: 0 0 16px !important; }
 
 /* ---------- Callouts ---------- */
 .callout {

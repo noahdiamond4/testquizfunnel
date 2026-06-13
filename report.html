@@ -101,6 +101,20 @@
           <p class="kicker-line">None of this shows up in a glass of water. All of it shows up in your mirror.</p>
         </div>
 
+        <!-- ============ SECTION 4b: WATER PROFILE RADAR ============ -->
+        <div class="card fade-in radar-card">
+          <p class="section-label">Your Water Profile</p>
+          <h2 id="radar-title">How your water scores across the board</h2>
+          <p id="radar-intro"></p>
+          <div class="radar-wrap">
+            <svg id="radar" viewBox="-30 0 380 340" aria-hidden="true"></svg>
+          </div>
+          <div class="radar-legend">
+            <span><i class="dot-you"></i> Your water</span>
+            <span><i class="dot-ideal"></i> Filtered / ideal water</span>
+          </div>
+        </div>
+
         <!-- ============ SECTION 5: THE SCIENCE ============ -->
         <div class="card fade-in">
           <p class="section-label">The Part Nobody Tells You</p>
@@ -128,6 +142,21 @@
           </div>
 
           <p class="kicker-line" id="science-kicker"></p>
+        </div>
+
+        <!-- ============ SECTION 5b: CHLORINE EXPOSURE COUNTER ============ -->
+        <div class="card fade-in chlorine-card">
+          <p class="section-label">Your Chlorine Exposure</p>
+          <h2 id="chlorine-headline"></h2>
+          <div class="chlorine-meter">
+            <div class="chlorine-fill" id="chlorine-fill"></div>
+            <div class="chlorine-num">
+              <span class="cl-big" id="chlorine-gallons">0</span>
+              <span class="cl-unit">gallons of chlorinated water<br>over your body, every year</span>
+            </div>
+          </div>
+          <div class="pool-row" id="pool-row"></div>
+          <p class="chlorine-punch" id="chlorine-punch"></p>
         </div>
 
         <!-- ============ SECTION 6: YOUR ANSWERS, DECODED ============ -->
@@ -170,13 +199,33 @@
 
           <ul class="benefit-list" id="benefits"></ul>
 
-          <div class="finish-row" id="finish-row"></div>
+          <div class="reco-line">★ This is what we recommend for you, based on your quiz</div>
+
+          <div class="offer-config">
+            <div class="config-block">
+              <span class="config-label">Finish</span>
+              <div class="color-toggle" id="color-toggle">
+                <button type="button" data-finish="black">Gloss Black</button>
+                <button type="button" data-finish="chrome">Chrome / Silver</button>
+              </div>
+            </div>
+            <div class="config-block">
+              <span class="config-label">How many to filter your showers?</span>
+              <div class="qty-stepper">
+                <button type="button" id="qty-minus" aria-label="Decrease quantity">−</button>
+                <span id="qty-val">1</span>
+                <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+          </div>
+          <p class="reco-note" id="reco-note"></p>
 
           <div class="price-row">
             <span class="price-was" id="price-was"></span>
             <span class="price-now" id="price-now"></span>
             <span class="price-badge" id="price-badge"></span>
           </div>
+          <p class="price-each" id="price-each"></p>
           <p class="offer-note" id="offer-note">Free shipping · 2-minute tool-free install · Fits standard US shower arms</p>
 
           <a class="btn btn-primary btn-lg" id="cta-main" href="#">Get My Sift →</a>
