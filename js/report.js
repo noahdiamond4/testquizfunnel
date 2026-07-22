@@ -487,7 +487,7 @@
 
   const benefits = [];
   benefits.push("<strong>15-stage filtration with KDF-55 + calcium sulfite</strong> — the media combination for " + (hardBad ? "very hard, high-chlorine water like " + p.areaName + "'s" : "chlorinated water like " + p.areaName + "'s"));
-  benefits.push("<strong>Reduces chlorine up to 98%</strong> — the #1 cause of stripped " + (a.concern === "skin" ? "skin" : "hair and fading color"));
+  benefits.push("<strong>Reduces chlorine up to 99%</strong> — the #1 cause of stripped " + (a.concern === "skin" ? "skin" : "hair and fading color"));
   benefits.push("<strong>Captures sediment, rust &amp; pipe particles</strong> before they reach you");
   if (a.hair === "color") benefits.push("<strong>Color-safe by design</strong> — slower fade, less brass between salon visits");
   if (a.concern === "scalp") benefits.push("<strong>Gentler on the scalp</strong> — removing chlorine helps calm flaking and itch for many users");
