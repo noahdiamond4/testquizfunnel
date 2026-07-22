@@ -22,6 +22,13 @@ const SIFT_CONFIG = {
   // Fallback product URL used when variant IDs are blank.
   checkoutUrl: "https://choosesift.com/products/sift-filtered-showerhead",
 
+  // Recharge subscription selling-plan ID (the "Filter Replacement
+  // Every 90 Days" plan attached to the shower head). When set, the
+  // checkout link becomes /cart/{variantId}:{qty}?selling_plan={id}
+  // so the head is sold WITH the 90-day filter subscription.
+  // Leave blank = one-time purchase (no subscription). Just the number.
+  sellingPlanId: "",
+
   // ---------- Lead capture (Google Sheets export) ----------
   // Deployed Apps Script web app. Every report unlock + every funnel
   // event POSTs here and is appended to the Google Sheet.
