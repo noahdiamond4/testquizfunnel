@@ -598,11 +598,21 @@ img { max-width: 100%; display: block; }
 
 .benefit-list { list-style: none; margin: 0 0 24px; }
 .benefit-list li {
-  display: flex; gap: 12px; align-items: flex-start;
-  padding: 9px 0; font-size: 1rem; color: var(--ink-soft);
+  position: relative;
+  padding: 14px 0 14px 36px;
+  font-size: 1rem; line-height: 1.5; color: var(--ink-soft);
+  border-bottom: 1px solid rgba(11,39,51,.06);
 }
-.benefit-list li::before { content: "✓"; color: var(--green); font-weight: 800; flex-shrink: 0; }
-.benefit-list li strong { color: var(--ink); }
+.benefit-list li:last-child { border-bottom: none; }
+.benefit-list li::before {
+  content: "✓";
+  position: absolute; left: 0; top: 13px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #e3f5ed; color: var(--green);
+  font-size: .78rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.benefit-list li strong { color: var(--ink); font-weight: 700; }
 
 .finish-row {
   background: var(--aqua-pale);

@@ -204,7 +204,7 @@
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(lead),
-        });
+        }).catch(function () {});
       } catch (err) { /* never block the unlock on analytics */ }
     }
     unlock(false);
@@ -542,7 +542,9 @@
   $("qty-minus").addEventListener("click", () => { if (selQty > 1) { selQty--; updateOffer(); } });
   $("qty-plus").addEventListener("click", () => { if (selQty < QTY_MAX) { selQty++; updateOffer(); } });
 
-  $("cta-micro").textContent = "Your report and configuration are saved for 24 hours.";
+  $("cta-micro").innerHTML =
+    "🔄 Includes a fresh replacement filter every 90 days to keep it working — cancel anytime. " +
+    "Your report &amp; configuration are saved for 24 hours.";
 
   $("guarantee-title").textContent = SIFT_CONFIG.guaranteeDays + "-Day \"Feel the Difference\" Guarantee";
 
@@ -589,7 +591,9 @@
              : "Replacement filters swap in 30 seconds and ship on a schedule you control — cancel anytime.");
   $("faq-guarantee").textContent =
     "Then it costs you nothing — " + SIFT_CONFIG.guaranteeDays + " days, full refund, return shipping on us.";
-  $("faq-micro").textContent = "ZIP " + p.zip + " · Report expires in 24 hours · " + SIFT_CONFIG.guaranteeDays + "-day guarantee";
+  $("faq-micro").innerHTML =
+    "🔄 Includes a fresh filter every 90 days — cancel anytime · " + SIFT_CONFIG.guaranteeDays + "-day guarantee<br>" +
+    "ZIP " + p.zip + " · Report expires in 24 hours";
 
   // ============================================================
   // CTAs + STICKY
