@@ -71,9 +71,12 @@
   let selQty = recQty;
 
   function buildCheckoutUrl(f, q) {
+    // NOTE: intentionally NOT named "qty" — that collides with Shopify's
+    // own cart/checkout quantity handling and can interfere with the
+    // selling_plan attaching correctly when quantity > 1.
     const params = new URLSearchParams({
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
-      zip: p.zip, score: p.score, concern: a.concern || "", finish: f, qty: q,
+      zip: p.zip, score: p.score, concern: a.concern || "", finish: f, quiz_qty: q,
     });
     // Attach the Recharge subscription plan for this finish, so the
     // shower head is sold WITH the 90-day subscription (single line item).
