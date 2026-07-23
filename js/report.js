@@ -78,9 +78,20 @@
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
       zip: p.zip, score: p.score, concern: a.concern || "", finish: f, quiz_qty: q,
     });
-    // Attach the Recharge subscription plan for this finish, so the
-    // shower head is sold WITH the 90-day subscription (single line item).
     const planId = SIFT_CONFIG.sellingPlanIds && SIFT_CONFIG.sellingPlanIds[f];
+    const handle = SIFT_CONFIG.productHandles && SIFT_CONFIG.productHandles[f];
+
+    // Preferred path: the PRODUCT PAGE with the subscription pre-selected.
+    // This store's Recharge widget only reliably attaches the subscription
+    // through the product page (a /cart/ permalink drops it). ?selling_plan
+    // pre-selects "Subscribe"; ?quantity carries the quiz's shower count.
+    if (handle) {
+      if (planId) params.set("selling_plan", planId);
+      params.set("quantity", q);
+      return "https://" + SIFT_CONFIG.shopifyDomain + "/products/" + handle + "?" + params.toString();
+    }
+
+    // Fallback: cart permalink (used only if no product handle is configured).
     if (planId) params.set("selling_plan", planId);
     const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
     if (variantId) {

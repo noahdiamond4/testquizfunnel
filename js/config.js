@@ -31,6 +31,16 @@ const SIFT_CONFIG = {
     chrome: "1967980640",  // 90-day plan on the Silver product
   },
 
+  // Product-page handles per finish. This store's Recharge only reliably
+  // attaches the subscription through the PRODUCT PAGE widget (a plain
+  // /cart/ permalink does not), so CTAs link to the product page with the
+  // subscription pre-selected via ?selling_plan=. Customer clicks
+  // Add to Cart there. Blank = fall back to the /cart/ permalink.
+  productHandles: {
+    black: "sift-filtered-showerhead",             // Black product page
+    chrome: "sift-filtered-showerhead-black-copy", // Silver product page
+  },
+
   // ---------- Lead capture (Google Sheets export) ----------
   // Deployed Apps Script web app. Every report unlock + every funnel
   // event POSTs here and is appended to the Google Sheet.
