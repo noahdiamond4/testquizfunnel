@@ -75,10 +75,10 @@
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
       zip: p.zip, score: p.score, concern: a.concern || "", finish: f, qty: q,
     });
-    // Attach the Recharge subscription plan when configured, so the
-    // shower head is sold WITH the "Filter Replacement Every 90 Days"
-    // subscription (single line item).
-    if (SIFT_CONFIG.sellingPlanId) params.set("selling_plan", SIFT_CONFIG.sellingPlanId);
+    // Attach the Recharge subscription plan for this finish, so the
+    // shower head is sold WITH the 90-day subscription (single line item).
+    const planId = SIFT_CONFIG.sellingPlanIds && SIFT_CONFIG.sellingPlanIds[f];
+    if (planId) params.set("selling_plan", planId);
     const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
     if (variantId) {
       return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + q + "?" + params.toString();
