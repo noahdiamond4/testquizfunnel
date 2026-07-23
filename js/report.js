@@ -71,29 +71,30 @@
   let selQty = recQty;
 
   function buildCheckoutUrl(f, q) {
-    // NOTE: intentionally NOT named "qty" — that collides with Shopify's
-    // own cart/checkout quantity handling and can interfere with the
-    // selling_plan attaching correctly when quantity > 1.
+    const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
+    const planId = SIFT_CONFIG.sellingPlanIds && SIFT_CONFIG.sellingPlanIds[f];
+
+    // Frictionless subscription checkout: /cart/add uses the SAME reliable
+    // add-to-cart path as the product-page widget (a plain /cart/{id}:{q}
+    // permalink silently drops the selling plan on this store). return_to
+    // then sends the shopper straight to checkout with the subscription
+    // already attached — no product page, no extra click.
+    if (variantId && planId) {
+      const cp = new URLSearchParams({
+        id: variantId,
+        quantity: q,
+        selling_plan: planId,
+        return_to: "/checkout",
+      });
+      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/add?" + cp.toString();
+    }
+
+    // No subscription plan configured for this finish: plain one-time cart
+    // permalink, with tracking params for attribution.
     const params = new URLSearchParams({
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
       zip: p.zip, score: p.score, concern: a.concern || "", finish: f, quiz_qty: q,
     });
-    const planId = SIFT_CONFIG.sellingPlanIds && SIFT_CONFIG.sellingPlanIds[f];
-    const handle = SIFT_CONFIG.productHandles && SIFT_CONFIG.productHandles[f];
-
-    // Preferred path: the PRODUCT PAGE with the subscription pre-selected.
-    // This store's Recharge widget only reliably attaches the subscription
-    // through the product page (a /cart/ permalink drops it). ?selling_plan
-    // pre-selects "Subscribe"; ?quantity carries the quiz's shower count.
-    if (handle) {
-      if (planId) params.set("selling_plan", planId);
-      params.set("quantity", q);
-      return "https://" + SIFT_CONFIG.shopifyDomain + "/products/" + handle + "?" + params.toString();
-    }
-
-    // Fallback: cart permalink (used only if no product handle is configured).
-    if (planId) params.set("selling_plan", planId);
-    const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
     if (variantId) {
       return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + q + "?" + params.toString();
     }
