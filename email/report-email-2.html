@@ -1,0 +1,50 @@
+<!-- ============================================================
+     Sift — Flow Email #2 (the science, +1 day)
+     Subject: It's not your shampoo. It's your {{ person.water_area }} water.
+     Paste into Klaviyo's HTML editor.
+     ============================================================ -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">You filter the water you drink. You absorb the water you shower in.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f9fa;margin:0;padding:0;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <tr><td align="center" style="padding:8px 0 20px;">
+          <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#0b2733;letter-spacing:.02em;">Sift<span style="color:#0e7c8c;">.</span></span>
+        </td></tr>
+
+        <!-- Hero -->
+        <tr><td style="background:#0b2733;border-radius:20px 20px 0 0;padding:34px 28px;text-align:center;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9fe3ec;">The part nobody tells you</div>
+          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;color:#ffffff;margin:12px 0 0;">You filter the water you drink.<br>You <span style="color:#ff8a6a;">absorb</span> the water you shower in.</h1>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="background:#ffffff;border-radius:0 0 20px 20px;padding:28px;">
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#41606c;margin:0 0 16px;">Hi {{ person.first_name|default:'there' }} — your {{ person.water_area|default:'local' }} water scored <strong style="color:#0b2733;">{{ person.water_score|default:'' }}/100</strong>. Here's why that matters more than any product on your shelf. Your shower hits you three ways at once:</p>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:10px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#41606c;"><strong style="color:#0b2733;">Your skin</strong> — warm water opens your pores while chlorine strips the oils that hold moisture in. That "tight" feeling after a shower is your barrier, rinsed off.</td></tr>
+            <tr><td style="padding:10px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#41606c;border-top:1px solid #eef3f4;"><strong style="color:#0b2733;">Your lungs</strong> — hot water turns chlorine to steam. A 10-minute shower is a chlorine steam room, and you're the only thing breathing.</td></tr>
+            <tr><td style="padding:10px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#41606c;border-top:1px solid #eef3f4;"><strong style="color:#0b2733;">Your hair</strong> — wet strands swell open and minerals slip in, then harden as it dries. It's why conditioner stops working.</td></tr>
+          </table>
+
+          <p style="font-family:Georgia,serif;font-size:17px;line-height:1.5;color:#0b2733;margin:20px 0 22px;">A 10-minute shower runs ~20 gallons over you. You're filtering the half-gallon you drink — and standing in the twenty.</p>
+
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <tr><td align="center" style="background:#e8512f;border-radius:12px;">
+              <a href="{{ person.checkout_url }}" style="display:inline-block;padding:16px 34px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;color:#ffffff;text-decoration:none;">Filter my shower &rarr;</a>
+            </td></tr>
+          </table>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8fa6ad;text-align:center;margin:14px 0 0;">Or <a href="{{ person.report_url }}" style="color:#0e7c8c;">re-read your full water report</a>.</p>
+        </td></tr>
+
+        <tr><td style="padding:24px 20px 8px;text-align:center;">
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8fa6ad;margin:0;">Sift &middot; {% if organization.address1 %}{{ organization.address1 }}, {{ organization.city }} {{ organization.region }}{% endif %}<br><a href="{% unsubscribe %}" style="color:#8fa6ad;text-decoration:underline;">Unsubscribe</a></p>
+        </td></tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
