@@ -7,10 +7,47 @@
 // ============================================================
 
 (function () {
-  const raw = sessionStorage.getItem("sift_quiz");
-  if (!raw) { window.location.replace("index.html"); return; }
+  // Rebuild answers + profile from the URL query string. Enables an
+  // emailed/shared report link like:
+  //   report.html?zip=85032&concern=hair&symptoms=buildup,smell&hair=color
+  //             &fixtures=black&showers=2&household=2
+  // Returns null if there's no usable ZIP. Never throws.
+  function answersFromUrl() {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const zip = (q.get("zip") || "").trim();
+      if (!/^\d{5}$/.test(zip)) return null;
+      const prof = getWaterProfile(zip);
+      if (!prof) return null;
+      const symptomsRaw = q.get("symptoms") || "";
+      return {
+        answers: {
+          zip: zip,
+          concern: q.get("concern") || "",
+          symptoms: symptomsRaw ? symptomsRaw.split(/[|,]/).filter(Boolean) : [],
+          hair: q.get("hair") || "",
+          fixtures: q.get("fixtures") || "",
+          showers: q.get("showers") || "1",
+          household: q.get("household") || "1",
+        },
+        profile: prof,
+      };
+    } catch (e) { return null; }
+  }
 
-  const { answers, profile } = JSON.parse(raw);
+  // Primary source: the quiz session. Fallback: URL params (email/share link).
+  let answers, profile;
+  let fromUrlLink = false;
+  const raw = sessionStorage.getItem("sift_quiz");
+  if (raw) {
+    try { ({ answers, profile } = JSON.parse(raw)); } catch (e) { /* fall through */ }
+  }
+  if (!answers || !profile) {
+    const parsed = answersFromUrl();
+    if (parsed) { answers = parsed.answers; profile = parsed.profile; fromUrlLink = true; }
+  }
+  if (!answers || !profile) { window.location.replace("index.html"); return; }
+
   const p = profile;
   const a = answers;
   const $ = (id) => document.getElementById(id);
@@ -218,6 +255,16 @@
       chlorine: p.chlorineLabel,
       concern: a.concern, symptoms: (a.symptoms || []).join("|"),
       hair: a.hair, fixtures: a.fixtures, finish: selFinish, showers: a.showers, household: a.household,
+      // Shareable link that rebuilds THIS report — for the email flow
+      // (Klaviyo) and retargeting. Uses whatever domain the report is on.
+      reportUrl: (function () {
+        const rp = new URLSearchParams({
+          zip: a.zip, concern: a.concern || "", symptoms: (a.symptoms || []).join(","),
+          hair: a.hair || "", fixtures: a.fixtures || "",
+          showers: a.showers || "1", household: a.household || "1",
+        });
+        return location.origin + location.pathname + "?" + rp.toString();
+      })(),
       page: location.href, ts: new Date().toISOString(),
     };
     localStorage.setItem("sift_lead", JSON.stringify({ email, ts: Date.now() }));
@@ -237,7 +284,9 @@
   });
 
   // Returning visitor who already unlocked once: skip the gate.
-  if (existingLead) unlock(true);
+  // Returning visitor, OR arriving via an emailed/shared report link
+  // (they already gave their email) — skip the gate and show the report.
+  if (existingLead || fromUrlLink) unlock(true);
 
   // ============================================================
   // SECTION 4 — WHAT WE FOUND
