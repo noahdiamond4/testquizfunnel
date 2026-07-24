@@ -51,7 +51,7 @@ const SIFT_CONFIG = {
   // "Completed Water Quiz" event + writes all quiz data (score, grade,
   // ZIP, report_url, checkout_url, ...) onto the Klaviyo profile, so a
   // Klaviyo Flow can send the 10-min report email + follow-up sequence.
-  klaviyoPublicKey: "UK4v33x",
+  klaviyoPublicKey: "UK4v33",
   // OPTIONAL but recommended: a Klaviyo List ID. When set, the funnel
   // also subscribes the email to that list (marketing consent) so the
   // flow can actually send. Get it from Klaviyo > Lists & Segments >
