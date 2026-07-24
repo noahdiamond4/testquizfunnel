@@ -1,5 +1,5 @@
 // ============================================================
-// Sift — Personalized Report Page
+// Sift — Personalized Report Page (build refresh)
 // Reads quiz answers + water profile from sessionStorage and
 // composes the advertorial. Gates the full report behind an
 // email unlock, exports the lead to Google Sheets, and routes
