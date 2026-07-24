@@ -1,0 +1,77 @@
+<!-- ============================================================
+     Sift — Flow Email #1 (report delivery, +10 min)
+     Paste this into Klaviyo's HTML email editor.
+     Merge tags: person.water_score, water_area, water_grade,
+     water_hardness, water_chlorine, report_url, checkout_url, first_name
+     ============================================================ -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your {{ person.water_area|default:'local' }} water scored {{ person.water_score|default:'' }}/100 — here's your full report.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f9fa;margin:0;padding:0;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- Wordmark -->
+        <tr><td align="center" style="padding:8px 0 20px;">
+          <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#0b2733;letter-spacing:.02em;">Sift<span style="color:#0e7c8c;">.</span></span>
+        </td></tr>
+
+        <!-- Hero: the score -->
+        <tr><td style="background:#0b2733;border-radius:20px 20px 0 0;padding:36px 28px 30px;text-align:center;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9fe3ec;">Your Water Report &middot; {{ person.water_area|default:'Your Area' }}</div>
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:72px;line-height:1;font-weight:bold;color:#ff8a6a;padding:14px 0 6px;">{{ person.water_score|default:'—' }}<span style="font-size:26px;color:#9fe3ec;">/100</span></div>
+          <div style="display:inline-block;background:#e8512f;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;padding:5px 16px;border-radius:999px;">Grade {{ person.water_grade|default:'' }}</div>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#d7e7ea;margin:18px 0 0;">Hi {{ person.first_name|default:'there' }} — here's the full water report for your ZIP. Those missing points are landing on your hair and skin every time you shower.</p>
+        </td></tr>
+
+        <!-- Findings -->
+        <tr><td style="background:#ffffff;padding:28px;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#0e7c8c;font-weight:bold;">What we found</div>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+            <tr>
+              <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#0b2733;font-weight:bold;padding:12px 0;border-bottom:1px solid #eef3f4;">Water hardness</td>
+              <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#d9534f;font-weight:bold;padding:12px 0;border-bottom:1px solid #eef3f4;">{{ person.water_hardness|default:'—' }}</td>
+            </tr>
+            <tr>
+              <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#0b2733;font-weight:bold;padding:12px 0;">Chlorine exposure</td>
+              <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#d9534f;font-weight:bold;padding:12px 0;">{{ person.water_chlorine|default:'—' }}</td>
+            </tr>
+          </table>
+
+          <p style="font-family:Georgia,serif;font-size:17px;line-height:1.5;color:#0b2733;margin:20px 0 22px;">None of this shows up in a glass of water. All of it shows up in your mirror.</p>
+
+          <!-- Report button -->
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <tr><td align="center" style="background:#0e7c8c;border-radius:12px;">
+              <a href="{{ person.report_url }}" style="display:inline-block;padding:15px 30px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;">See your full report &rarr;</a>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- Offer -->
+        <tr><td style="background:#ffffff;border-radius:0 0 20px 20px;padding:8px 28px 32px;border-top:1px solid #eef3f4;">
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#0e7c8c;font-weight:bold;padding-top:20px;">The fix, made for your water</div>
+          <h2 style="font-family:Georgia,serif;font-size:22px;color:#0b2733;margin:8px 0 10px;">You can't out-condition your water. You can filter it.</h2>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#41606c;margin:0 0 8px;">The Sift filtered shower head reduces up to 99% of chlorine and the minerals behind dull hair and dry skin — installed in 2 minutes.</p>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#0b2733;margin:0 0 20px;"><strong>$89.99 today</strong> with your <strong>first filter free</strong>, then just $34.99 every 90 days. 60-day money-back guarantee.</p>
+
+          <!-- Buy button -->
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <tr><td align="center" style="background:#e8512f;border-radius:12px;">
+              <a href="{{ person.checkout_url }}" style="display:inline-block;padding:16px 34px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;color:#ffffff;text-decoration:none;">Fix my water &rarr;</a>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 20px 8px;text-align:center;">
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8fa6ad;margin:0;">Water figures are regional estimates based on USGS &amp; EPA data and your answers, not a lab test of your tap.<br>
+          Sift &middot; {% if organization.address1 %}{{ organization.address1 }}, {{ organization.city }} {{ organization.region }}{% endif %}<br>
+          <a href="{% unsubscribe %}" style="color:#8fa6ad;text-decoration:underline;">Unsubscribe</a></p>
+        </td></tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
