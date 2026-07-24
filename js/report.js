@@ -340,11 +340,10 @@
     // 2) Subscribe to a list (marketing consent) when a List ID is set —
     // this is what lets the Flow actually SEND the emails.
     if (SIFT_CONFIG.klaviyoListId) {
-      const subProfile = {
-        email: email,
-        properties: props,
-        subscriptions: { email: { marketing: { consent: "SUBSCRIBED" } } },
-      };
+      // The /client/subscriptions/ endpoint sets marketing consent by
+      // virtue of being the subscribe endpoint — do NOT include a
+      // "subscriptions" field on the profile (Klaviyo rejects it as 400).
+      const subProfile = { email: email, properties: props };
       if (name) subProfile.first_name = name;
       try {
         logResp("subscribe", fetch("https://a.klaviyo.com/client/subscriptions/?company_id=" + encodeURIComponent(key), {
