@@ -56,7 +56,7 @@ const SIFT_CONFIG = {
   // also subscribes the email to that list (marketing consent) so the
   // flow can actually send. Get it from Klaviyo > Lists & Segments >
   // your list > Settings. Blank = event only (no list subscribe).
-  klaviyoListId: "",
+  klaviyoListId: "U25Syz",
   // Metric name the Klaviyo Flow triggers on.
   klaviyoMetric: "Completed Water Quiz",
 
