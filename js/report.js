@@ -307,9 +307,21 @@
     const profileAttrs = { email: email, properties: props };
     if (name) profileAttrs.first_name = name;
 
+    // Logs the Klaviyo response so failures are visible in the browser
+    // console (the fetch is otherwise fire-and-forget). Remove once live.
+    function logResp(label, promise) {
+      promise.then(function (r) {
+        r.text().then(function (t) {
+          console.log("[Klaviyo " + label + "]", r.status, t || "(ok)");
+        });
+      }).catch(function (e) {
+        console.log("[Klaviyo " + label + "] request failed:", e && e.message);
+      });
+    }
+
     // 1) Metric event (triggers the Flow, carries the merge data).
     try {
-      fetch("https://a.klaviyo.com/client/events/?company_id=" + encodeURIComponent(key), {
+      logResp("event", fetch("https://a.klaviyo.com/client/events/?company_id=" + encodeURIComponent(key), {
         method: "POST",
         headers: { "Content-Type": "application/json", revision: REV },
         body: JSON.stringify({
@@ -322,14 +334,20 @@
             },
           },
         }),
-      }).catch(function () {});
+      }));
     } catch (e) { /* never block */ }
 
     // 2) Subscribe to a list (marketing consent) when a List ID is set —
     // this is what lets the Flow actually SEND the emails.
     if (SIFT_CONFIG.klaviyoListId) {
+      const subProfile = {
+        email: email,
+        properties: props,
+        subscriptions: { email: { marketing: { consent: "SUBSCRIBED" } } },
+      };
+      if (name) subProfile.first_name = name;
       try {
-        fetch("https://a.klaviyo.com/client/subscriptions/?company_id=" + encodeURIComponent(key), {
+        logResp("subscribe", fetch("https://a.klaviyo.com/client/subscriptions/?company_id=" + encodeURIComponent(key), {
           method: "POST",
           headers: { "Content-Type": "application/json", revision: REV },
           body: JSON.stringify({
@@ -337,12 +355,12 @@
               type: "subscription",
               attributes: {
                 custom_source: "Water Quiz Funnel",
-                profile: { data: { type: "profile", attributes: profileAttrs } },
+                profile: { data: { type: "profile", attributes: subProfile } },
               },
               relationships: { list: { data: { type: "list", id: SIFT_CONFIG.klaviyoListId } } },
             },
           }),
-        }).catch(function () {});
+        }));
       } catch (e) { /* never block */ }
     }
   }
