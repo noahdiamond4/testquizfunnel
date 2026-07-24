@@ -46,6 +46,20 @@ const SIFT_CONFIG = {
   // event POSTs here and is appended to the Google Sheet.
   leadWebhookUrl: "https://script.google.com/macros/s/AKfycbwJq0Xqhxv-Py_gQBr8Q_lNoerrQ5U4I9e8-GLXDbvGALeaF7ufHEV9ZLft-wW-t62x/exec",
 
+  // ---------- Klaviyo (email flow) ----------
+  // Public API key (Site ID). On report unlock the funnel fires a
+  // "Completed Water Quiz" event + writes all quiz data (score, grade,
+  // ZIP, report_url, checkout_url, ...) onto the Klaviyo profile, so a
+  // Klaviyo Flow can send the 10-min report email + follow-up sequence.
+  klaviyoPublicKey: "UK4v33x",
+  // OPTIONAL but recommended: a Klaviyo List ID. When set, the funnel
+  // also subscribes the email to that list (marketing consent) so the
+  // flow can actually send. Get it from Klaviyo > Lists & Segments >
+  // your list > Settings. Blank = event only (no list subscribe).
+  klaviyoListId: "",
+  // Metric name the Klaviyo Flow triggers on.
+  klaviyoMetric: "Completed Water Quiz",
+
   // ---------- Offer ----------
   // Matches the live Shopify price exactly so the page and checkout
   // never disagree. compareAtPrice drives the strikethrough + "Save %"

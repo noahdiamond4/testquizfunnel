@@ -280,8 +280,72 @@
         }).catch(function () {});
       } catch (err) { /* never block the unlock on analytics */ }
     }
+
+    // Push to Klaviyo for the email flow (fire & forget; never blocks).
+    sendToKlaviyo(name, email, lead, buildCheckoutUrl(selFinish, selQty));
+
     unlock(false);
   });
+
+  // -------- Klaviyo: identify profile + "Completed Water Quiz" event --------
+  // Client-side APIs (public key only). Writes all quiz data onto the
+  // profile so Flow emails can merge-tag score/city/report_url/etc.
+  function sendToKlaviyo(name, email, lead, checkoutUrl) {
+    const key = SIFT_CONFIG.klaviyoPublicKey;
+    if (!key || !email) return;
+    const REV = "2024-10-15";
+    const props = {
+      water_score: lead.score, water_grade: lead.grade,
+      water_zip: lead.zip, water_area: lead.area, water_state: lead.state,
+      water_hardness_ppm: lead.hardnessPpm, water_hardness: lead.hardnessLabel,
+      water_chlorine: lead.chlorine,
+      concern: lead.concern, symptoms: lead.symptoms,
+      hair: lead.hair, fixtures: lead.fixtures, finish: lead.finish,
+      showers: lead.showers, household: lead.household,
+      report_url: lead.reportUrl, checkout_url: checkoutUrl,
+    };
+    const profileAttrs = { email: email, properties: props };
+    if (name) profileAttrs.first_name = name;
+
+    // 1) Metric event (triggers the Flow, carries the merge data).
+    try {
+      fetch("https://a.klaviyo.com/client/events/?company_id=" + encodeURIComponent(key), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", revision: REV },
+        body: JSON.stringify({
+          data: {
+            type: "event",
+            attributes: {
+              properties: props,
+              metric: { data: { type: "metric", attributes: { name: SIFT_CONFIG.klaviyoMetric || "Completed Water Quiz" } } },
+              profile: { data: { type: "profile", attributes: profileAttrs } },
+            },
+          },
+        }),
+      }).catch(function () {});
+    } catch (e) { /* never block */ }
+
+    // 2) Subscribe to a list (marketing consent) when a List ID is set —
+    // this is what lets the Flow actually SEND the emails.
+    if (SIFT_CONFIG.klaviyoListId) {
+      try {
+        fetch("https://a.klaviyo.com/client/subscriptions/?company_id=" + encodeURIComponent(key), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", revision: REV },
+          body: JSON.stringify({
+            data: {
+              type: "subscription",
+              attributes: {
+                custom_source: "Water Quiz Funnel",
+                profile: { data: { type: "profile", attributes: profileAttrs } },
+              },
+              relationships: { list: { data: { type: "list", id: SIFT_CONFIG.klaviyoListId } } },
+            },
+          }),
+        }).catch(function () {});
+      } catch (e) { /* never block */ }
+    }
+  }
 
   // Returning visitor who already unlocked once: skip the gate.
   // Returning visitor, OR arriving via an emailed/shared report link
