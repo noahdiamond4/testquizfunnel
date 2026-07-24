@@ -71,32 +71,39 @@
   let selQty = recQty;
 
   function buildCheckoutUrl(f, q) {
+    const domain = SIFT_CONFIG.shopifyDomain;
     const variantId = SIFT_CONFIG.variantIds && SIFT_CONFIG.variantIds[f];
-    const planId = SIFT_CONFIG.sellingPlanIds && SIFT_CONFIG.sellingPlanIds[f];
+    const filterVariant = SIFT_CONFIG.filterVariantId;
+    const filterPlan = SIFT_CONFIG.filterSellingPlanId;
+    const code = SIFT_CONFIG.discountCode;
 
-    // Frictionless subscription checkout: /cart/add uses the SAME reliable
-    // add-to-cart path as the product-page widget (a plain /cart/{id}:{q}
-    // permalink silently drops the selling plan on this store). return_to
-    // then sends the shopper straight to checkout with the subscription
-    // already attached — no product page, no extra click.
-    if (variantId && planId) {
-      const cp = new URLSearchParams({
-        id: variantId,
-        quantity: q,
-        selling_plan: planId,
-        return_to: "/checkout",
+    // Confirmed-working offer flow (see config.js for the full rationale):
+    // head one-time -> filter subscription -> apply discount -> checkout.
+    // Built by chaining single /cart/add calls via return_to, because this
+    // store drops the selling plan on multi-item and plain-permalink adds.
+    if (variantId && filterVariant && filterPlan) {
+      // Last hop: apply the free-filter discount (if any), then checkout.
+      const lastHop = code
+        ? "/discount/" + encodeURIComponent(code) + "?redirect=/checkout"
+        : "/checkout";
+      // 2nd add: the filter subscription -> last hop.
+      const filterAdd = new URLSearchParams({
+        id: filterVariant, quantity: "1", selling_plan: filterPlan, return_to: lastHop,
       });
-      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/add?" + cp.toString();
+      // 1st add: the shower head (one-time, quiz quantity) -> filter add.
+      const headAdd = new URLSearchParams({
+        id: variantId, quantity: q, return_to: "/cart/add?" + filterAdd.toString(),
+      });
+      return "https://" + domain + "/cart/add?" + headAdd.toString();
     }
 
-    // No subscription plan configured for this finish: plain one-time cart
-    // permalink, with tracking params for attribution.
+    // Fallback (no filter/plan configured): plain one-time cart permalink.
     const params = new URLSearchParams({
       utm_source: "quiz_funnel", utm_medium: "report", utm_campaign: "water_report",
       zip: p.zip, score: p.score, concern: a.concern || "", finish: f, quiz_qty: q,
     });
     if (variantId) {
-      return "https://" + SIFT_CONFIG.shopifyDomain + "/cart/" + variantId + ":" + q + "?" + params.toString();
+      return "https://" + domain + "/cart/" + variantId + ":" + q + "?" + params.toString();
     }
     const base = SIFT_CONFIG.checkoutUrl;
     return base + (base.includes("?") ? "&" : "?") + params.toString();

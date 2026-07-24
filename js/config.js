@@ -11,35 +11,35 @@ const SIFT_CONFIG = {
   // first-party cookies survive the handoff (better attribution).
   shopifyDomain: "choosesift.com",
 
-  // Shopify variant IDs for each finish. CTAs build a cart permalink:
-  // https://{domain}/cart/{variantId}:{qty}  (qty from the "how many
-  // showers" answer). "chrome" routes the Silver product.
+  // ---- The offer structure (confirmed working) ----
+  // The SHOWER HEAD is a ONE-TIME purchase. The recurring subscription
+  // lives on a cheap FILTER product, so the checkout's "recurring
+  // subtotal" correctly reads the filter price (not the head price — a
+  // non-Plus store can't otherwise change that display). A 100%-off,
+  // first-order-only discount makes the first filter free, so order one
+  // is just the head price. The checkout link chains:
+  //   /cart/add (head, one-time)
+  //     -> return_to /cart/add (filter, subscription)
+  //       -> return_to /discount/{code}?redirect=/checkout
+  // This is the only combination that reliably attaches the subscription
+  // on this store (plain /cart/ permalinks silently drop the selling plan).
+
+  // One-time shower head variant IDs per finish.
   variantIds: {
     black: "42651147567200",   // Sift Filtered Showerhead - Black
     chrome: "42871694950496",  // Sift Filtered Showerhead - Silver
   },
 
+  // The filter subscription (shared across finishes).
+  filterVariantId: "42985499721824",   // SIFT Filter Replacement ($34.99)
+  filterSellingPlanId: "1968144480",   // its 90-day subscription plan
+
+  // 100%-off, first-order-only, filter-scoped discount code. Auto-applied
+  // so the first filter is free (first charge = head only). Blank to skip.
+  discountCode: "FREEFILTER",
+
   // Fallback product URL used when variant IDs are blank.
   checkoutUrl: "https://choosesift.com/products/sift-filtered-showerhead",
-
-  // Recharge subscription selling-plan IDs (per finish — they differ
-  // per product). When set, the checkout link becomes
-  // /cart/{variantId}:{qty}?selling_plan={id} so the head is sold WITH
-  // the 90-day subscription. Blank = one-time purchase.
-  sellingPlanIds: {
-    black: "1967947872",   // 90-day plan on the Black product
-    chrome: "1967980640",  // 90-day plan on the Silver product
-  },
-
-  // Product-page handles per finish. This store's Recharge only reliably
-  // attaches the subscription through the PRODUCT PAGE widget (a plain
-  // /cart/ permalink does not), so CTAs link to the product page with the
-  // subscription pre-selected via ?selling_plan=. Customer clicks
-  // Add to Cart there. Blank = fall back to the /cart/ permalink.
-  productHandles: {
-    black: "sift-filtered-showerhead",             // Black product page
-    chrome: "sift-filtered-showerhead-black-copy", // Silver product page
-  },
 
   // ---------- Lead capture (Google Sheets export) ----------
   // Deployed Apps Script web app. Every report unlock + every funnel
